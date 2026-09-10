@@ -102,10 +102,10 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- کد اتاق ۵ کاراکتری -->
+      <!-- کد اتاق ۳ رقمی -->
       <div class="bg-[#181921] p-3.5 border border-[rgba(237,232,223,0.1)] rounded-sm text-center mb-5">
         <span class="text-[11px] text-[#736f68] block mb-1">کد اتصال مستقیم اتاق:</span>
-        <span class="text-2xl font-mono font-black text-[#f59e0b] tracking-widest select-all">
+        <span class="text-3xl font-mono font-black text-[#f59e0b] tracking-[0.25em] select-all">
           {{ roomId }}
         </span>
       </div>

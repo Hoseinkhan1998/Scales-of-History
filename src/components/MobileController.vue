@@ -122,14 +122,14 @@ onMounted(() => {
       </span>
     </header>
 
-    <!-- در صورت عدم اتصال: فرم ورود کد ۵ رقمی اتاق با دکمه اتصال زیر کادر -->
+    <!-- در صورت عدم اتصال: فرم ورود کد ۳ رقمی اتاق با دکمه اتصال زیر کادر -->
     <div v-if="!isConnected" class="my-auto max-w-sm w-full mx-auto p-6 bg-[#13141b] border border-[rgba(237,232,223,0.15)] rounded-md text-center space-y-4">
       <div class="w-12 h-12 mx-auto bg-[#b45309]/20 rounded-full flex items-center justify-center text-[#f59e0b] text-xl">
         📱
       </div>
       <h2 class="text-lg font-black text-[#ede8df]">اتصال به نمایشگر اصلی</h2>
       <p class="text-xs text-[#a8a39a] leading-relaxed">
-        کد ۵ رقمی نمایان‌شده روی صفحه دسکتاپ را وارد کنید:
+        کد ۳ رقمی نمایان‌شده روی صفحه دسکتاپ را وارد کنید:
       </p>
 
       <!-- چیدمان عمودی: اینپوت بالا و دکمه اتصال دقیقاً زیر آن -->
@@ -139,9 +139,9 @@ onMounted(() => {
           type="tel" 
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="مثال: ۴۸۲۹۱" 
-          class="w-full bg-[#1a1c24] border border-[rgba(237,232,223,0.2)] rounded-sm p-3.5 text-center font-mono font-black text-2xl tracking-widest text-[#f59e0b] focus:outline-none focus:border-[#b45309]"
-          maxlength="5"
+          placeholder="مثال: ۴۸۲" 
+          class="w-full bg-[#1a1c24] border border-[rgba(237,232,223,0.2)] rounded-sm p-3.5 text-center font-mono font-black text-3xl tracking-[0.3em] text-[#f59e0b] focus:outline-none focus:border-[#b45309]"
+          maxlength="3"
           @keyup.enter="handleConnectManual"
         />
         <button 

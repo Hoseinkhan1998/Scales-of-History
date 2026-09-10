@@ -88,13 +88,9 @@ function handleEnter(e) {
           @click="handleEnter"
           class="w-full relative h-16 rounded-sm border border-[rgba(237,232,223,0.25)] bg-[#121319]/85 backdrop-blur-md overflow-hidden transition-all duration-500 hover:border-[#b45309] hover:shadow-[0_0_30px_rgba(180,83,9,0.35)] active:scale-98 cursor-pointer"
         >
-          <!-- ۱. حالت عادی (بدون هاور): نمایش کاملاً واضح، برجسته و خوانای کد ۵ رقمی اتاق جهت ورود در گوشی -->
-          <div class="absolute inset-0 flex items-center justify-between px-6 transition-all duration-500 opacity-100 group-hover:opacity-0 pointer-events-none">
-            <div class="flex items-center gap-2.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#22c55e] animate-pulse"></span>
-              <span class="text-xs sm:text-sm text-[#a8a39a] font-medium">کد ریموت گوشی:</span>
-            </div>
-            <span class="text-xl sm:text-2xl font-mono font-black text-[#f59e0b] tracking-widest bg-black/60 px-4 py-1 rounded border border-[#f59e0b]/40 shadow-inner">
+          <!-- ۱. حالت عادی (بدون هاور): فقط کد ۳ رقمی بزرگ، تمیز و چشم‌نواز بدون هیچ متن اضافی -->
+          <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 opacity-100 group-hover:opacity-0 pointer-events-none">
+            <span class="text-2xl sm:text-3xl font-mono font-black text-[#f59e0b] tracking-[0.35em] drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
               {{ roomId || '...' }}
             </span>
           </div>

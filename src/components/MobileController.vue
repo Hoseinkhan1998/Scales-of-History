@@ -93,9 +93,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#090a0d] text-[#ede8df] flex flex-col justify-between p-4 sm:p-5 select-none font-sans" dir="rtl">
+  <!-- کانتینر فیکس و غیرقابل اسکرول برای تبدیل گوشی به ریموت سخت‌افزاری واقعی -->
+  <div class="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#090a0d] text-[#ede8df] flex flex-col justify-between p-3.5 sm:p-5 select-none font-sans touch-none overscroll-none" dir="rtl">
     <!-- وضعیت بالای صفحه کنترلر -->
-    <header class="w-full flex justify-between items-center pb-3 border-b border-[rgba(237,232,223,0.12)]">
+    <header class="w-full flex justify-between items-center pb-2.5 border-b border-[rgba(237,232,223,0.12)] shrink-0">
       <div class="flex items-center gap-2">
         <span 
           class="w-2.5 h-2.5 rounded-full"
@@ -106,7 +107,7 @@ onMounted(() => {
         </span>
       </div>
 
-      <!-- دکمه ورود سریع به مقاله از راه دور (بدون نیاز به کلیک روی دسکتاپ) -->
+      <!-- دکمه ورود سریع به مقاله از راه دور -->
       <button 
         v-if="isConnected"
         @click="handleEnterPublication"
@@ -121,7 +122,7 @@ onMounted(() => {
       </span>
     </header>
 
-    <!-- در صورت عدم اتصال: فرم ورود کد ۵ رقمی اتاق -->
+    <!-- در صورت عدم اتصال: فرم ورود کد ۵ رقمی اتاق با دکمه اتصال زیر کادر -->
     <div v-if="!isConnected" class="my-auto max-w-sm w-full mx-auto p-6 bg-[#13141b] border border-[rgba(237,232,223,0.15)] rounded-md text-center space-y-4">
       <div class="w-12 h-12 mx-auto bg-[#b45309]/20 rounded-full flex items-center justify-center text-[#f59e0b] text-xl">
         📱
@@ -131,23 +132,24 @@ onMounted(() => {
         کد ۵ رقمی نمایان‌شده روی صفحه دسکتاپ را وارد کنید:
       </p>
 
-      <div class="flex gap-2">
+      <!-- چیدمان عمودی: اینپوت بالا و دکمه اتصال دقیقاً زیر آن -->
+      <div class="flex flex-col gap-3">
         <input 
           v-model="inputCode" 
           type="tel" 
           inputmode="numeric"
           pattern="[0-9]*"
           placeholder="مثال: ۴۸۲۹۱" 
-          class="flex-1 bg-[#1a1c24] border border-[rgba(237,232,223,0.2)] rounded-sm p-3 text-center font-mono font-bold text-2xl tracking-widest text-[#f59e0b] focus:outline-none focus:border-[#b45309]"
+          class="w-full bg-[#1a1c24] border border-[rgba(237,232,223,0.2)] rounded-sm p-3.5 text-center font-mono font-black text-2xl tracking-widest text-[#f59e0b] focus:outline-none focus:border-[#b45309]"
           maxlength="5"
           @keyup.enter="handleConnectManual"
         />
         <button 
           @click="handleConnectManual"
           :disabled="isConnecting"
-          class="px-5 bg-[#b45309] hover:bg-[#d97706] text-white font-bold text-sm rounded-sm transition-all cursor-pointer disabled:opacity-50"
+          class="w-full py-3.5 bg-[#b45309] hover:bg-[#d97706] text-white font-bold text-base rounded-sm transition-all cursor-pointer disabled:opacity-50 active:scale-98 shadow-lg"
         >
-          {{ isConnecting ? '...' : 'اتصال' }}
+          {{ isConnecting ? 'در حال برقراری ارتباط...' : 'اتصال به نمایشگر' }}
         </button>
       </div>
 
@@ -156,27 +158,27 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- بدنه اصلی کنترلر پس از اتصال -->
-    <main v-else class="my-auto max-w-sm w-full mx-auto space-y-4">
+    <!-- بدنه اصلی کنترلر پس از اتصال: اندازه دقیق و بدون اسکرول -->
+    <main v-else class="my-auto max-w-sm w-full mx-auto space-y-3 shrink-0">
       <!-- کارت مشخصات صفحه کنونی نمایشگر -->
-      <div class="p-3.5 bg-[#14151d] border border-[rgba(237,232,223,0.12)] rounded-md text-center">
-        <div class="text-[10px] text-[#b45309] font-bold mb-0.5">
+      <div class="p-2.5 bg-[#14151d] border border-[rgba(237,232,223,0.12)] rounded-md text-center">
+        <div class="text-[10px] text-[#b45309] font-bold">
           فصل {{ currentChapter.number }} از {{ toPersianDigits(totalPages) }}
         </div>
-        <h3 class="text-sm font-black text-[#ede8df] truncate">
+        <h3 class="text-xs sm:text-sm font-black text-[#ede8df] truncate mt-0.5">
           {{ currentChapter.title }}
         </h3>
       </div>
 
       <!-- دکمه‌های ناوبری اصلی (ورق زدن فصول) -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-2.5">
         <!-- صفحه قبل -->
         <button 
           @click="handlePrev" 
           :disabled="currentPage <= 1"
-          class="h-24 bg-[#1b1c26] active:bg-[#252736] disabled:opacity-30 border border-[rgba(237,232,223,0.15)] rounded-md flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-transform active:scale-95 shadow-lg group"
+          class="h-20 bg-[#1b1c26] active:bg-[#252736] disabled:opacity-30 border border-[rgba(237,232,223,0.15)] rounded-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-transform active:scale-95 shadow-lg group"
         >
-          <span class="text-2xl text-[#a8a39a] group-hover:text-white transition-colors">▶</span>
+          <span class="text-xl text-[#a8a39a] group-hover:text-white transition-colors">▶</span>
           <span class="text-xs font-bold text-[#ede8df]">صفحه قبل</span>
         </button>
 
@@ -184,42 +186,42 @@ onMounted(() => {
         <button 
           @click="handleNext" 
           :disabled="currentPage >= totalPages"
-          class="h-24 bg-[#b45309] active:bg-[#92400e] disabled:opacity-30 border border-[#b45309] rounded-md flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-transform active:scale-95 shadow-xl group text-white"
+          class="h-20 bg-[#b45309] active:bg-[#92400e] disabled:opacity-30 border border-[#b45309] rounded-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-transform active:scale-95 shadow-xl group text-white"
         >
-          <span class="text-2xl transition-transform group-hover:-translate-x-1">◀</span>
+          <span class="text-xl transition-transform group-hover:-translate-x-1">◀</span>
           <span class="text-xs font-black">صفحه بعد</span>
         </button>
       </div>
 
       <!-- کنترل‌های اسکرول صفحه مانیتور از راه دور -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-2.5">
         <!-- اسکرول به بالا -->
         <button 
           @click="handleScrollUp" 
-          class="h-14 bg-[#161722] active:bg-[#222436] border border-[rgba(237,232,223,0.12)] rounded-md flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 text-[#ede8df]"
+          class="h-12 bg-[#161722] active:bg-[#222436] border border-[rgba(237,232,223,0.12)] rounded-md flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 text-[#ede8df]"
         >
-          <span class="text-base text-[#f59e0b]">▲</span>
+          <span class="text-sm text-[#f59e0b]">▲</span>
           <span class="text-xs font-bold">اسکرول بالا</span>
         </button>
 
         <!-- اسکرول به پایین -->
         <button 
           @click="handleScrollDown" 
-          class="h-14 bg-[#161722] active:bg-[#222436] border border-[rgba(237,232,223,0.12)] rounded-md flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 text-[#ede8df]"
+          class="h-12 bg-[#161722] active:bg-[#222436] border border-[rgba(237,232,223,0.12)] rounded-md flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 text-[#ede8df]"
         >
-          <span class="text-base text-[#f59e0b]">▼</span>
+          <span class="text-sm text-[#f59e0b]">▼</span>
           <span class="text-xs font-bold">اسکرول پایین</span>
         </button>
       </div>
 
       <!-- کنترل بلندی صدا و وضعیت پخش -->
-      <div class="p-4 bg-[#14151d] border border-[rgba(237,232,223,0.12)] rounded-md space-y-3">
-        <div class="flex justify-between items-center">
-          <span class="text-xs font-bold text-[#ede8df] flex items-center gap-1.5">
+      <div class="p-3 bg-[#14151d] border border-[rgba(237,232,223,0.12)] rounded-md space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <span class="font-bold text-[#ede8df] flex items-center gap-1.5">
             <span>🔊</span>
             تنظیم صدای نمایشگر
           </span>
-          <span class="text-xs font-mono font-bold text-[#f59e0b]">
+          <span class="font-mono font-bold text-[#f59e0b]">
             {{ toPersianDigits(volume) }}٪
           </span>
         </div>
@@ -231,14 +233,14 @@ onMounted(() => {
           max="100" 
           :value="volume" 
           @input="handleVolumeChange"
-          class="w-full h-2 bg-[#222430] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
+          class="w-full h-1.5 bg-[#222430] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
         />
 
-        <div class="flex justify-between items-center pt-2 border-t border-[rgba(237,232,223,0.06)]">
-          <span class="text-[11px] text-[#736f68]">موسیقی:</span>
+        <div class="flex justify-between items-center pt-1.5 border-t border-[rgba(237,232,223,0.06)] text-xs">
+          <span class="text-[10px] text-[#736f68]">موسیقی:</span>
           <button 
             @click="handleTogglePlay"
-            class="px-3.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer"
+            class="px-3 py-1 rounded text-[10px] font-bold transition-all cursor-pointer"
             :class="isAudioPlaying ? 'bg-[#3f6212] text-[#bef264]' : 'bg-[#262835] text-[#a8a39a]'"
           >
             {{ isAudioPlaying ? 'در حال پخش (مکث)' : 'متوقف (پخش)' }}
@@ -247,12 +249,12 @@ onMounted(() => {
       </div>
 
       <!-- فهرست پرش سریع به فصل‌ها -->
-      <div class="p-2.5 bg-[#111217] border border-[rgba(237,232,223,0.08)] rounded-md">
-        <label class="block text-[10px] text-[#736f68] mb-1">پرش مستقیم به فصل:</label>
+      <div class="p-2 bg-[#111217] border border-[rgba(237,232,223,0.08)] rounded-md">
+        <label class="block text-[10px] text-[#736f68] mb-0.5">پرش مستقیم به فصل:</label>
         <select 
           :value="currentPage" 
           @change="(e) => gotoPage(Number(e.target.value))"
-          class="w-full bg-[#1c1d27] border border-[rgba(237,232,223,0.15)] rounded p-1.5 text-xs text-[#ede8df] focus:outline-none"
+          class="w-full bg-[#1c1d27] border border-[rgba(237,232,223,0.15)] rounded p-1 text-xs text-[#ede8df] focus:outline-none"
         >
           <option v-for="ch in chapters" :key="ch.id" :value="ch.id">
             فصل {{ ch.number }}: {{ ch.title }}
@@ -262,7 +264,7 @@ onMounted(() => {
     </main>
 
     <!-- فوتر پایین کنترلر -->
-    <footer class="pt-3 border-t border-[rgba(237,232,223,0.08)] text-center text-[10px] text-[#736f68]">
+    <footer class="pt-2 border-t border-[rgba(237,232,223,0.08)] text-center text-[10px] text-[#736f68] shrink-0">
       ترازوی تاریخ • ریموت کنترل هماهنگ با سرور ورسل (Vercel)
     </footer>
   </div>

@@ -51,23 +51,7 @@ function handleEnter(e) {
       <div class="flex items-center gap-2 bg-black/40 px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
         <span class="w-2 h-2 rounded-full bg-[#b45309] animate-pulse"></span>
         <span class="font-mono text-[11px] text-[#ede8df]">آرشیو اسناد معاصر ایران • ۱۹۶۳ تا ۲۰۲۶</span>
-      </div>
-
-      <!-- راهنمای شروع موسیقی در صورت مسدود بودن اولیه توسط مرورگر -->
-      <div 
-        v-if="!isAudioPlaying"
-        class="flex items-center gap-2 bg-[#b45309]/80 hover:bg-[#d97706] text-white px-4 py-1.5 rounded-full border border-amber-400/50 backdrop-blur-md shadow-[0_0_20px_rgba(180,83,9,0.5)] animate-pulse transition-transform hover:scale-105"
-      >
-        <span class="text-sm">🔊</span>
-        <span class="font-bold text-[11px]">برای پخش موسیقی سینمایی کلیک کنید یا از ریموت بزنید</span>
-      </div>
-      <div 
-        v-else 
-        class="flex items-center gap-2 bg-black/50 px-3.5 py-1.5 rounded-full border border-emerald-500/30 backdrop-blur-sm text-emerald-400 text-[11px] font-bold"
-      >
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        <span>موسیقی مستند در حال پخش است</span>
-      </div>
+      </div>      
     </header>
 
     <!-- کانون محتوایی مرکزی: عنوان اثر همراه با پس‌زمینه بلور برای خوانایی کامل متن -->

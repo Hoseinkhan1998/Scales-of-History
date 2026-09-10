@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/* فونت زیبای ساحل */
+@font-face {
+  font-family: 'Sahel';
+  src: url('/fonts/Sahel-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sahel';
+  src: url('/fonts/Sahel.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sahel';
+  src: url('/fonts/Sahel-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sahel';
+  src: url('/fonts/Sahel-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sahel';
+  src: url('/fonts/Sahel-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --bg-main: #0d0e11;
+    --bg-card: #131418;
+    --bg-card-hover: #191a20;
+    --text-primary: #ede8df;
+    --text-secondary: #a8a39a;
+    --text-muted: #736f68;
+    --border-color: rgba(237, 232, 223, 0.14);
+    --border-light: rgba(237, 232, 223, 0.07);
+    --accent-crimson: #991b1b;
+    --accent-amber: #b45309;
+    --accent-olive: #3f6212;
+    --accent-blue: #1e3a8a;
+  }
+
+  body {
+    font-family: 'Sahel', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    direction: rtl;
+    text-align: right;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* بافت روزنامه‌ای و لایه دانه‌دانه بسیار ظریف */
+.paper-grain {
+  background-image: radial-gradient(rgba(237, 232, 223, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* استایل خطوط جداکننده مطبوعاتی */
+.editorial-rule {
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.editorial-rule-double {
+  border-top: 3px double var(--border-color);
+}
+
+.editorial-rule-thick {
+  border-bottom: 2px solid var(--border-color);
+}
+
+/* ستون‌بندی روزنامه‌ای */
+.newspaper-cols-2 {
+  column-count: 2;
+  column-gap: 2.5rem;
+  column-rule: 1px solid var(--border-light);
+}
+
+.newspaper-cols-3 {
+  column-count: 3;
+  column-gap: 2rem;
+  column-rule: 1px solid var(--border-light);
+}
+
+/* نوار اسکرول شخصی‌سازی شده */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0e11;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(237, 232, 223, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(237, 232, 223, 0.35);
+}
+
+/* انیمیشن محوگشایی پرده سینمایی */
+@keyframes cinematicReveal {
+  0% {
+    filter: blur(35px) brightness(0.08) contrast(1.8);
+    transform: scale(1.08);
+    opacity: 0.2;
+  }
+  50% {
+    filter: blur(18px) brightness(0.4) contrast(1.4);
+    transform: scale(1.04);
+    opacity: 0.6;
+  }
+  100% {
+    filter: blur(0px) brightness(1) contrast(1.05);
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-cinematic {
+  animation: cinematicReveal 15s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* پالس ظریف نشانگر وضعیت صوتی و زنده */
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.97); }
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 3s ease-in-out infinite;
+}

@@ -38,8 +38,9 @@ export function useAudioPlayer() {
       audio2.preload = 'auto';
       audio1.autoplay = true;
 
-      audio1.volume = (volume.value / 100);
-      audio2.volume = (volume.value / 100);
+      const targetVol = Math.max(0, Math.min(1, volume.value / 100));
+      audio1.volume = targetVol;
+      audio2.volume = targetVol;
 
       // انتقال نرم به قطعه دوم پس از پایان قطعه اول
       audio1.addEventListener('ended', () => {
@@ -53,21 +54,30 @@ export function useAudioPlayer() {
         playTrack(audio1);
       });
 
-      // به محض هرگونه تکان دادن ماوس، لمس صفحه، اسکرول یا فشردن کلید، صدا آغاز می‌شود
-      const triggerImmediatePlay = () => {
-        if ((isBlockedByBrowser.value || !isAudioPlaying.value) && audio1) {
-          playTrack(audio1);
+      // آغاز فوری پخش در همان میلی‌ثانیه اول
+      playWithAggressiveAutoplay(audio1);
+
+      // اتصال شنودگرهای فراگیر: با کوچک‌ترین جابجایی ماوس، فوکوس، اسکرول یا لمس، بلافاصله صدا فعال و بی‌صدا بودن لغو می‌شود
+      const unmuteAndPlay = () => {
+        if (audio1) {
+          audio1.muted = false;
+          audio1.volume = targetVol;
+          if (audio1.paused) {
+            audio1.play().catch(() => {});
+          }
+          isAudioPlaying.value = true;
+          isBlockedByBrowser.value = false;
         }
         removeEarlyListeners();
       };
 
-      const earlyEvents = ['mousemove', 'pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart', 'click'];
+      const earlyEvents = ['mousemove', 'pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart', 'focus', 'mouseover', 'click'];
       const removeEarlyListeners = () => {
-        earlyEvents.forEach(evt => window.removeEventListener(evt, triggerImmediatePlay));
+        earlyEvents.forEach(evt => window.removeEventListener(evt, unmuteAndPlay));
       };
 
       earlyEvents.forEach(evt => {
-        window.addEventListener(evt, triggerImmediatePlay, { passive: true, once: true });
+        window.addEventListener(evt, unmuteAndPlay, { passive: true, once: true });
       });
 
       isInitialized = true;
@@ -76,8 +86,34 @@ export function useAudioPlayer() {
     }
   }
 
+  function playWithAggressiveAutoplay(audioEl) {
+    if (!audioEl) return;
+    
+    // ۱. ابتدا تلاش برای پخش مستقیم با صدا
+    audioEl.muted = false;
+    const playPromise = audioEl.play();
+    
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          isBlockedByBrowser.value = false;
+          isAudioPlaying.value = true;
+        })
+        .catch(() => {
+          // ۲. اگر پالیسی مرورگر مانع شد، فوری به صورت Muted پخش را از ثانیه صفر شروع کن
+          // تا تایم‌لاین صدا جلو برود و با اولین تکان ماوس، Mute برداشته شود!
+          audioEl.muted = true;
+          audioEl.play().then(() => {
+            isBlockedByBrowser.value = true;
+          }).catch(() => {});
+        });
+    }
+  }
+
   function playTrack(audioEl) {
     if (!audioEl) return;
+    audioEl.muted = false;
+    audioEl.volume = Math.max(0, Math.min(1, volume.value / 100));
     const playPromise = audioEl.play();
     if (playPromise !== undefined) {
       playPromise
@@ -85,10 +121,8 @@ export function useAudioPlayer() {
           isBlockedByBrowser.value = false;
           isAudioPlaying.value = true;
         })
-        .catch((err) => {
-          console.log('Autoplay deferred by browser policy, waiting for first movement:', err);
-          isBlockedByBrowser.value = true;
-          isAudioPlaying.value = false;
+        .catch(() => {
+          playWithAggressiveAutoplay(audioEl);
         });
     }
   }

@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import { Peer } from 'peerjs';
 
 // وضعیت مشترک سراسری (Singleton)
@@ -11,20 +11,16 @@ const isConnected = ref(false);
 const roomId = ref('');
 const connectionError = ref('');
 const connectedPeersCount = ref(0);
+const hasEnteredExperience = ref(false);
 
 let peer = null;
 let activeConnections = [];
 let controllerConn = null;
 let broadcastChannel = null;
 
-// تولید کد اتاق خوانا و کوتاه
+// تولید کد اتاق کاملاً عددی و ۵ رقمی (مثلاً 48291)
 function generateShortRoomId() {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  let result = 'IR-';
-  for (let i = 0; i < 4; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  return String(Math.floor(10000 + Math.random() * 90000));
 }
 
 export function useSyncState() {
@@ -39,6 +35,16 @@ export function useSyncState() {
       }
     } catch (e) {
       console.warn('BroadcastChannel not supported:', e);
+    }
+  }
+
+  // اسکرول نرم در صفحه مانیتور اصلی
+  function performScroll(delta) {
+    if (typeof window === 'undefined') return;
+    window.scrollBy({ top: delta, behavior: 'smooth' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollBy({ top: delta, behavior: 'smooth' });
     }
   }
 
@@ -92,11 +98,28 @@ export function useSyncState() {
         }
         break;
 
+      case 'SCROLL_DOWN':
+        performScroll(380);
+        break;
+
+      case 'SCROLL_UP':
+        performScroll(-380);
+        break;
+
+      case 'ENTER_PUBLICATION':
+        hasEnteredExperience.value = true;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('host-enter-publication'));
+        }
+        broadcastState();
+        break;
+
       case 'SYNC_STATE':
         // دریافت وضعیت از میزبان (مخصوص کنترلر)
         if (typeof data.currentPage === 'number') currentPage.value = data.currentPage;
         if (typeof data.volume === 'number') volume.value = data.volume;
         if (typeof data.isPlaying === 'boolean') isAudioPlaying.value = data.isPlaying;
+        if (typeof data.hasEnteredExperience === 'boolean') hasEnteredExperience.value = data.hasEnteredExperience;
         isConnected.value = true;
         break;
 
@@ -118,6 +141,7 @@ export function useSyncState() {
       totalPages: totalPages.value,
       volume: volume.value,
       isPlaying: isAudioPlaying.value,
+      hasEnteredExperience: hasEnteredExperience.value,
       timestamp: Date.now()
     };
 
@@ -148,8 +172,8 @@ export function useSyncState() {
 
     initBroadcastChannel();
 
-    // ایجاد اتصال PeerJS با شناسه پیشونددار برای جلوگیری از تداخل
-    const peerId = `hist-host-${finalRoomId.toLowerCase()}`;
+    // ایجاد اتصال PeerJS با شناسه عددی
+    const peerId = `hist-host-${finalRoomId}`;
 
     try {
       peer = new Peer(peerId, {
@@ -173,14 +197,14 @@ export function useSyncState() {
         connectedPeersCount.value = activeConnections.length;
 
         conn.on('open', () => {
-          // ارسال وضعیت کنونی به دستگاه متصل شده
           conn.send({
             type: 'SYNC_STATE',
             roomId: roomId.value,
             currentPage: currentPage.value,
             totalPages: totalPages.value,
             volume: volume.value,
-            isPlaying: isAudioPlaying.value
+            isPlaying: isAudioPlaying.value,
+            hasEnteredExperience: hasEnteredExperience.value
           });
         });
 
@@ -201,9 +225,7 @@ export function useSyncState() {
 
       peer.on('error', (err) => {
         console.warn('Host Peer error:', err);
-        // در صورت بروز تداخل نام، کد را تغییر نمی‌دهیم اما خطا را ثبت می‌کنیم
         if (err.type === 'unavailable-id') {
-          console.warn('Peer ID taken, retrying with new room ID');
           startHost(generateShortRoomId());
         }
       });
@@ -215,14 +237,14 @@ export function useSyncState() {
   // راه‌اندازی حالت کنترلر (گوشی تلفن همراه)
   function connectAsController(targetRoomId) {
     isHost.value = false;
-    const cleanRoom = targetRoomId.trim().toUpperCase();
+    const cleanRoom = String(targetRoomId).trim();
     roomId.value = cleanRoom;
     connectionError.value = '';
     isConnected.value = false;
 
     initBroadcastChannel();
 
-    const hostPeerId = `hist-host-${cleanRoom.toLowerCase()}`;
+    const hostPeerId = `hist-host-${cleanRoom}`;
 
     try {
       peer = new Peer(null, {
@@ -267,7 +289,7 @@ export function useSyncState() {
 
       peer.on('error', (err) => {
         console.warn('Controller peer error:', err);
-        connectionError.value = 'دستگاهی با این کد یافت نشد یا در دسترس نیست';
+        connectionError.value = 'دستگاهی با این کد ۵ رقمی یافت نشد یا در دسترس نیست';
       });
     } catch (e) {
       console.warn('Failed to initialize controller peer:', e);
@@ -298,7 +320,7 @@ export function useSyncState() {
       localStorage.setItem('iran_history_sync_command', JSON.stringify(payload));
     } catch (e) {}
 
-    // اعمال موقت روی خود کنترلر جهت روان بودن رابط کاربری
+    // اعمال موقت روی کنترلر جهت پاسخگویی آنی
     if (commandPayload.type === 'NEXT_PAGE' && currentPage.value < totalPages.value) {
       currentPage.value++;
     } else if (commandPayload.type === 'PREV_PAGE' && currentPage.value > 1) {
@@ -309,10 +331,12 @@ export function useSyncState() {
       volume.value = commandPayload.volume;
     } else if (commandPayload.type === 'TOGGLE_AUDIO') {
       isAudioPlaying.value = !isAudioPlaying.value;
+    } else if (commandPayload.type === 'ENTER_PUBLICATION') {
+      hasEnteredExperience.value = true;
     }
   }
 
-  // توابع کمکی برای ناوبری و کنترل صدا
+  // توابع کمکی برای ناوبری، اسکرول و کنترل صدا
   const nextPage = () => {
     if (isHost.value) {
       if (currentPage.value < totalPages.value) {
@@ -332,6 +356,31 @@ export function useSyncState() {
       }
     } else {
       sendCommand({ type: 'PREV_PAGE' });
+    }
+  };
+
+  const scrollDown = () => {
+    if (isHost.value) {
+      performScroll(380);
+    } else {
+      sendCommand({ type: 'SCROLL_DOWN' });
+    }
+  };
+
+  const scrollUp = () => {
+    if (isHost.value) {
+      performScroll(-380);
+    } else {
+      sendCommand({ type: 'SCROLL_UP' });
+    }
+  };
+
+  const enterPublication = () => {
+    hasEnteredExperience.value = true;
+    if (isHost.value) {
+      broadcastState();
+    } else {
+      sendCommand({ type: 'ENTER_PUBLICATION' });
     }
   };
 
@@ -375,10 +424,14 @@ export function useSyncState() {
     roomId,
     connectionError,
     connectedPeersCount,
+    hasEnteredExperience,
     startHost,
     connectAsController,
     nextPage,
     prevPage,
+    scrollDown,
+    scrollUp,
+    enterPublication,
     gotoPage,
     setVolume,
     toggleAudio,

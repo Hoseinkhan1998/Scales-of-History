@@ -24,10 +24,9 @@ import Page10VerdictSynthesis from './components/EditorialPages/Page10VerdictSyn
 import Page11Bibliography from './components/EditorialPages/Page11Bibliography.vue';
 
 const isMobileControllerRole = ref(false);
-const hasEnteredExperience = ref(false);
 const isPairingModalOpen = ref(false);
 
-const { currentPage, totalPages, startHost, isHost } = useSyncState();
+const { currentPage, totalPages, startHost, isHost, hasEnteredExperience } = useSyncState();
 const { startExperienceAudio } = useAudioPlayer();
 
 // فعال‌سازی کلیدهای میانبر صفحه‌کلید در حالت دسکتاپ
@@ -57,13 +56,11 @@ function handleStartExperience() {
   startExperienceAudio();
 }
 
-function handleSkipIntro() {
-  hasEnteredExperience.value = true;
-  startExperienceAudio();
-}
-
 onMounted(() => {
   if (typeof window !== 'undefined') {
+    // آغاز فوری پخش موسیقی در همان میلی‌ثانیه اول بارگذاری برنامه
+    startExperienceAudio();
+
     const params = new URLSearchParams(window.location.search);
     const roleParam = params.get('role');
     const isSmallScreen = window.innerWidth < 768;
@@ -75,6 +72,12 @@ onMounted(() => {
       // در غیر این صورت، این دستگاه نمایشگر اصلی (Host) است
       startHost();
     }
+
+    // شنود رویداد ورود به مقاله از طریق ریموت کنترلر گوشی
+    window.addEventListener('host-enter-publication', () => {
+      hasEnteredExperience.value = true;
+      startExperienceAudio();
+    });
   }
 });
 </script>

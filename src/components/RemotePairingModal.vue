@@ -94,11 +94,11 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- راهنمای آدرس شبکه برای اتصال گوشی با وای‌فای در محیط لوکال -->
+      <!-- راهنمای پیوند مستقیم در مرورگر گوشی -->
       <div class="bg-[#181921] p-2.5 border border-[rgba(237,232,223,0.1)] rounded-sm text-center mb-3 text-[11px] text-[#a8a39a]">
-        <span>آدرس مستقیم در مرورگر گوشی (وای‌فای مشترک):</span>
-        <div class="font-mono text-[#38bdf8] font-bold dir-ltr mt-0.5 select-all">
-          http://192.168.100.83:5175/?role=controller
+        <span>پیوند مستقیم کنترلر در مرورگر گوشی:</span>
+        <div class="font-mono text-[#38bdf8] font-bold dir-ltr mt-0.5 select-all truncate text-xs">
+          {{ controllerUrl }}
         </div>
       </div>
 

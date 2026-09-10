@@ -154,7 +154,6 @@ export function useSyncState() {
       case 'SET_VOLUME':
         if (typeof data.volume === 'number') {
           volume.value = Math.max(0, Math.min(100, data.volume));
-          broadcastState();
         }
         break;
 

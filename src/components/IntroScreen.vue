@@ -21,7 +21,9 @@ function handleScreenTap() {
 
 function handleEnter(e) {
   e.stopPropagation();
-  startExperienceAudio();
+  if (!isAudioPlaying.value) {
+    startExperienceAudio();
+  }
   emit('start-experience');
 }
 </script>

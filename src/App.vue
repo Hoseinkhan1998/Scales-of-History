@@ -53,7 +53,9 @@ const currentPageComponent = computed(() => {
 
 function handleStartExperience() {
   hasEnteredExperience.value = true;
-  startExperienceAudio();
+  if (!isAudioPlaying.value) {
+    startExperienceAudio();
+  }
 }
 
 onMounted(() => {
@@ -76,7 +78,9 @@ onMounted(() => {
     // شنود رویداد ورود به مقاله از طریق ریموت کنترلر گوشی
     window.addEventListener('host-enter-publication', () => {
       hasEnteredExperience.value = true;
-      startExperienceAudio();
+      if (!isAudioPlaying.value) {
+        startExperienceAudio();
+      }
     });
 
     // شنود رویداد پخش و توقف موسیقی از ریموت کنترل گوشی

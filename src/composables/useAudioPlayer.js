@@ -121,13 +121,20 @@ export function useAudioPlayer() {
 
   function startExperienceAudio() {
     initAudio();
+    // اگر صوتی در حال حاضر در حال پخش است، خط زمانی را به هیچ وجه ریست نکن تا پیوستگی حفظ شود
+    if (isAudioPlaying.value && ((audio1 && !audio1.paused) || (audio2 && !audio2.paused))) {
+      return;
+    }
+
     currentTrack = 1;
     if (audio2) {
       audio2.pause();
       audio2.currentTime = 0;
     }
     if (audio1) {
-      audio1.currentTime = 0;
+      if (audio1.paused) {
+        audio1.currentTime = 0;
+      }
       audio1.muted = false;
       audio1.volume = Math.max(0, Math.min(1, volume.value / 100));
       playTrack(audio1);
@@ -143,6 +150,9 @@ export function useAudioPlayer() {
 
   function resumeAudio() {
     initAudio();
+    if (isAudioPlaying.value && ((audio1 && !audio1.paused) || (audio2 && !audio2.paused))) {
+      return;
+    }
     const targetAudio = (currentTrack === 1 || !audio2) ? audio1 : audio2;
     if (targetAudio) {
       targetAudio.muted = false;

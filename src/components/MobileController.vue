@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useSyncState } from '../composables/useSyncState';
 import { chapters } from '../data/publicationData';
 import { toPersianDigits } from '../utils/persianNumbers';
@@ -26,6 +26,17 @@ const {
 
 const inputCode = ref('');
 const isConnecting = ref(false);
+
+// مدیریت محلی و تراتل اسلایدر ولوم برای جلوگیری قطعی از پرش و لگ حرکتی
+const localVolume = ref(volume.value);
+let isDraggingVolume = false;
+let volumeThrottleTimer = null;
+
+watch(volume, (newVal) => {
+  if (!isDraggingVolume) {
+    localVolume.value = newVal;
+  }
+});
 
 const currentChapter = computed(() => {
   return chapters.find(c => c.id === currentPage.value) || chapters[0];
@@ -62,9 +73,26 @@ function handleEnterPublication() {
   enterPublication();
 }
 
+function handleVolumeInput(e) {
+  isDraggingVolume = true;
+  const newVol = Number(e.target.value);
+  localVolume.value = newVol;
+
+  if (!volumeThrottleTimer) {
+    volumeThrottleTimer = setTimeout(() => {
+      setVolume(localVolume.value);
+      volumeThrottleTimer = null;
+    }, 40);
+  }
+}
+
 function handleVolumeChange(e) {
   const newVol = Number(e.target.value);
+  localVolume.value = newVol;
   setVolume(newVol);
+  setTimeout(() => {
+    isDraggingVolume = false;
+  }, 250);
 }
 
 function handleTogglePlay() {
@@ -222,18 +250,23 @@ onMounted(() => {
             تنظیم صدای نمایشگر
           </span>
           <span class="font-mono font-bold text-[#f59e0b]">
-            {{ toPersianDigits(volume) }}٪
+            {{ toPersianDigits(localVolume) }}٪
           </span>
         </div>
 
-        <!-- اسلایدر صدا -->
+        <!-- اسلایدر صدا کاملاً نرم، بدون پرش و با پاسخ‌دهی آنی -->
         <input 
           type="range" 
           min="0" 
           max="100" 
-          :value="volume" 
-          @input="handleVolumeChange"
-          class="w-full h-1.5 bg-[#222430] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
+          :value="localVolume" 
+          @input="handleVolumeInput"
+          @change="handleVolumeChange"
+          @pointerdown="isDraggingVolume = true"
+          @pointerup="handleVolumeChange"
+          @touchstart="isDraggingVolume = true"
+          @touchend="handleVolumeChange"
+          class="w-full h-2 bg-[#222430] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
         />
 
         <!-- کلید اختصاصی و برجسته کنترل بیدرنگ موسیقی در نمایشگر -->

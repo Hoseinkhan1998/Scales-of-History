@@ -236,14 +236,17 @@ onMounted(() => {
           class="w-full h-1.5 bg-[#222430] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
         />
 
-        <div class="flex justify-between items-center pt-1.5 border-t border-[rgba(237,232,223,0.06)] text-xs">
-          <span class="text-[10px] text-[#736f68]">موسیقی:</span>
+        <!-- کلید اختصاصی و برجسته کنترل بیدرنگ موسیقی در نمایشگر -->
+        <div class="pt-1.5 border-t border-[rgba(237,232,223,0.08)]">
           <button 
             @click="handleTogglePlay"
-            class="px-3 py-1 rounded text-[10px] font-bold transition-all cursor-pointer"
-            :class="isAudioPlaying ? 'bg-[#3f6212] text-[#bef264]' : 'bg-[#262835] text-[#a8a39a]'"
+            class="w-full py-2.5 px-3 rounded-sm text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
+            :class="isAudioPlaying 
+              ? 'bg-[#365314] active:bg-[#1a2e05] text-[#bef264] border border-[#65a30d]/60 shadow-[0_0_12px_rgba(101,163,13,0.3)]' 
+              : 'bg-[#b45309] active:bg-[#78350f] text-white border border-[#f59e0b]/80 shadow-[0_0_15px_rgba(180,83,9,0.4)]'"
           >
-            {{ isAudioPlaying ? 'در حال پخش (مکث)' : 'متوقف (پخش)' }}
+            <span class="text-sm">{{ isAudioPlaying ? '⏸' : '▶' }}</span>
+            <span>{{ isAudioPlaying ? 'توقف موسیقی در نمایشگر' : 'پخش فوری موسیقی در نمایشگر' }}</span>
           </button>
         </div>
       </div>

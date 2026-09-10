@@ -27,7 +27,7 @@ const isMobileControllerRole = ref(false);
 const isPairingModalOpen = ref(false);
 
 const { currentPage, totalPages, startHost, isHost, hasEnteredExperience } = useSyncState();
-const { startExperienceAudio } = useAudioPlayer();
+const { startExperienceAudio, resumeAudio, pauseAudio } = useAudioPlayer();
 
 // فعال‌سازی کلیدهای میانبر صفحه‌کلید در حالت دسکتاپ
 useKeyboardNav();
@@ -77,6 +77,15 @@ onMounted(() => {
     window.addEventListener('host-enter-publication', () => {
       hasEnteredExperience.value = true;
       startExperienceAudio();
+    });
+
+    // شنود رویداد پخش و توقف موسیقی از ریموت کنترل گوشی
+    window.addEventListener('host-play-audio', () => {
+      resumeAudio();
+    });
+
+    window.addEventListener('host-pause-audio', () => {
+      pauseAudio();
     });
   }
 });

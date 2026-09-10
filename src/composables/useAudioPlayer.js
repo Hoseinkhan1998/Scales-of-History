@@ -6,24 +6,24 @@ let audio2 = null;
 let currentTrack = 1; // 1 یا 2
 let isInitialized = false;
 
-const isMuted = ref(false);
 const isBlockedByBrowser = ref(false);
+const isAudioPlaying = ref(false);
 
-// کش کردن فایل‌های صوتی در Cache Storage مرورگر جهت عدم دانلود مجدد در دفعات بعدی
+// کش کردن فایل‌های صوتی در Cache Storage مرورگر جهت لود آنی و بدون دانلود مجدد
 async function cacheAudioFiles() {
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
       const cache = await caches.open('iran-history-audio-cache-v1');
       await cache.addAll(['/music/music1.mp3', '/music/music2.mp3']);
-      console.log('Audio tracks cached for offline / instant future play');
+      console.log('[Cache] Audio tracks cached for offline / instant playback');
     } catch (e) {
-      console.warn('Cache Storage note:', e);
+      console.warn('[Cache] Audio caching note:', e);
     }
   }
 }
 
 export function useAudioPlayer() {
-  const { volume, isAudioPlaying } = useSyncState();
+  const { volume, isAudioPlaying: syncIsPlaying } = useSyncState();
 
   function initAudio() {
     if (isInitialized || typeof window === 'undefined') return;
@@ -36,13 +36,12 @@ export function useAudioPlayer() {
 
       audio1.preload = 'auto';
       audio2.preload = 'auto';
-      audio1.autoplay = true;
 
       const targetVol = Math.max(0, Math.min(1, volume.value / 100));
       audio1.volume = targetVol;
       audio2.volume = targetVol;
 
-      // انتقال نرم به قطعه دوم پس از پایان قطعه اول
+      // انتقال پیوسته به قطعه دوم پس از پایان قطعه اول
       audio1.addEventListener('ended', () => {
         currentTrack = 2;
         playTrack(audio2);
@@ -54,59 +53,45 @@ export function useAudioPlayer() {
         playTrack(audio1);
       });
 
-      // آغاز فوری پخش در همان میلی‌ثانیه اول
-      playWithAggressiveAutoplay(audio1);
+      // رویدادهای تعامل کاربر که مرورگر را مجاز به پخش صدا می‌کند
+      const userActivationEvents = ['click', 'pointerdown', 'touchstart', 'mousedown', 'keydown'];
 
-      // اتصال شنودگرهای فراگیر: با کوچک‌ترین جابجایی ماوس، فوکوس، اسکرول یا لمس، بلافاصله صدا فعال و بی‌صدا بودن لغو می‌شود
-      const unmuteAndPlay = () => {
-        if (audio1) {
-          audio1.muted = false;
-          audio1.volume = targetVol;
-          if (audio1.paused) {
-            audio1.play().catch(() => {});
+      const unlockAudioHandler = () => {
+        const target = (currentTrack === 1 || !audio2) ? audio1 : audio2;
+        if (target && !isAudioPlaying.value) {
+          target.muted = false;
+          target.volume = Math.max(0, Math.min(1, volume.value / 100));
+          const p = target.play();
+          if (p !== undefined) {
+            p.then(() => {
+              isBlockedByBrowser.value = false;
+              isAudioPlaying.value = true;
+              syncIsPlaying.value = true;
+              userActivationEvents.forEach(evt => window.removeEventListener(evt, unlockAudioHandler));
+            }).catch(() => {});
           }
-          isAudioPlaying.value = true;
-          isBlockedByBrowser.value = false;
         }
-        removeEarlyListeners();
       };
 
-      const earlyEvents = ['mousemove', 'pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart', 'focus', 'mouseover', 'click'];
-      const removeEarlyListeners = () => {
-        earlyEvents.forEach(evt => window.removeEventListener(evt, unmuteAndPlay));
-      };
+      userActivationEvents.forEach(evt => {
+        window.addEventListener(evt, unlockAudioHandler, { passive: true });
+      });
 
-      earlyEvents.forEach(evt => {
-        window.addEventListener(evt, unmuteAndPlay, { passive: true, once: true });
+      // شنود رویدادهای صوتی ارسالی از ریموت کنترل گوشی
+      window.addEventListener('host-play-audio', () => {
+        resumeAudio();
+      });
+
+      window.addEventListener('host-pause-audio', () => {
+        pauseAudio();
       });
 
       isInitialized = true;
+
+      // تلاش اول برای پخش فوری و بی‌درنگ در ثانیه اول لود سایت
+      startExperienceAudio();
     } catch (err) {
       console.warn('Audio initialization error:', err);
-    }
-  }
-
-  function playWithAggressiveAutoplay(audioEl) {
-    if (!audioEl) return;
-    
-    // ۱. ابتدا تلاش برای پخش مستقیم با صدا
-    audioEl.muted = false;
-    const playPromise = audioEl.play();
-    
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          isBlockedByBrowser.value = false;
-          isAudioPlaying.value = true;
-        })
-        .catch(() => {
-          // ۲. اگر پالیسی مرورگر مانع شد، فوری به صورت Muted پخش را از ثانیه صفر شروع کن
-          // تا تایم‌لاین صدا جلو برود و با اولین تکان ماوس، Mute برداشته شود!
-          audioEl.muted = true;
-          audioEl.play().then(() => {
-            isBlockedByBrowser.value = true;
-          }).catch(() => {});
-        });
     }
   }
 
@@ -120,22 +105,31 @@ export function useAudioPlayer() {
         .then(() => {
           isBlockedByBrowser.value = false;
           isAudioPlaying.value = true;
+          syncIsPlaying.value = true;
         })
-        .catch(() => {
-          playWithAggressiveAutoplay(audioEl);
+        .catch((err) => {
+          console.log('[Autoplay Policy] Play blocked until user gesture or remote trigger:', err.name);
+          // زمان را جلو نبریم تا موسیقی از ثانیه صفر شروع شود
+          audioEl.pause();
+          audioEl.currentTime = 0;
+          isBlockedByBrowser.value = true;
+          isAudioPlaying.value = false;
+          syncIsPlaying.value = false;
         });
     }
   }
 
   function startExperienceAudio() {
     initAudio();
-    isBlockedByBrowser.value = false;
     currentTrack = 1;
     if (audio2) {
       audio2.pause();
       audio2.currentTime = 0;
     }
     if (audio1) {
+      audio1.currentTime = 0;
+      audio1.muted = false;
+      audio1.volume = Math.max(0, Math.min(1, volume.value / 100));
       playTrack(audio1);
     }
   }
@@ -144,23 +138,25 @@ export function useAudioPlayer() {
     if (audio1) audio1.pause();
     if (audio2) audio2.pause();
     isAudioPlaying.value = false;
+    syncIsPlaying.value = false;
   }
 
   function resumeAudio() {
     initAudio();
-    if (currentTrack === 1 && audio1) {
-      playTrack(audio1);
-    } else if (currentTrack === 2 && audio2) {
-      playTrack(audio2);
+    const targetAudio = (currentTrack === 1 || !audio2) ? audio1 : audio2;
+    if (targetAudio) {
+      targetAudio.muted = false;
+      targetAudio.volume = Math.max(0, Math.min(1, volume.value / 100));
+      playTrack(targetAudio);
     }
   }
 
-  // نظارت بر تغییرات سراسری وضعیت پخش (از ریموت کنترل یا هدر)
-  watch(isAudioPlaying, (newVal) => {
+  // نظارت بر تغییرات سراسری وضعیت پخش (همگام با ریموت کنترل)
+  watch(syncIsPlaying, (newVal) => {
     if (!isInitialized) return;
-    if (newVal) {
+    if (newVal && !isAudioPlaying.value) {
       resumeAudio();
-    } else {
+    } else if (!newVal && isAudioPlaying.value) {
       pauseAudio();
     }
   });
@@ -176,7 +172,6 @@ export function useAudioPlayer() {
     isAudioPlaying,
     volume,
     isBlockedByBrowser,
-    isMuted,
     initAudio,
     startExperienceAudio,
     pauseAudio,

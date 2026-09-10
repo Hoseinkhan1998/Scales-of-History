@@ -4,7 +4,7 @@ import { useAudioPlayer } from '../composables/useAudioPlayer';
 import { useSyncState } from '../composables/useSyncState';
 
 const emit = defineEmits(['start-experience']);
-const { startExperienceAudio } = useAudioPlayer();
+const { startExperienceAudio, isAudioPlaying, isBlockedByBrowser } = useAudioPlayer();
 const { roomId } = useSyncState();
 
 onMounted(() => {
@@ -12,13 +12,26 @@ onMounted(() => {
   startExperienceAudio();
 });
 
-function handleEnter() {
+// با هر کلیک یا لمس در هر کجای صفحه آغازین، موسیقی بی‌درنگ از ثانیه صفر پخش می‌شود
+function handleScreenTap() {
+  if (!isAudioPlaying.value) {
+    startExperienceAudio();
+  }
+}
+
+function handleEnter(e) {
+  e.stopPropagation();
+  startExperienceAudio();
   emit('start-experience');
 }
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 bg-[#07080a] flex flex-col justify-between items-center p-6 md:p-12 overflow-hidden select-none">
+  <div 
+    @click="handleScreenTap"
+    @pointerdown="handleScreenTap"
+    class="fixed inset-0 z-50 bg-[#07080a] flex flex-col justify-between items-center p-6 md:p-12 overflow-hidden select-none cursor-pointer"
+  >
     <!-- پس‌زمینه تصویر تاریخی fight.png با شفافیت بیشتر و وضوح بالاتر -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
       <img 
@@ -34,10 +47,26 @@ function handleEnter() {
     </div>
 
     <!-- سربرگ مینیمال آغازین -->
-    <header class="relative z-10 w-full max-w-5xl flex justify-center items-center text-xs tracking-widest text-[#a8a39a]/90">
+    <header class="relative z-10 w-full max-w-5xl flex flex-col sm:flex-row justify-between items-center gap-3 text-xs tracking-widest text-[#a8a39a]/90">
       <div class="flex items-center gap-2 bg-black/40 px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
         <span class="w-2 h-2 rounded-full bg-[#b45309] animate-pulse"></span>
         <span class="font-mono text-[11px] text-[#ede8df]">آرشیو اسناد معاصر ایران • ۱۹۶۳ تا ۲۰۲۶</span>
+      </div>
+
+      <!-- راهنمای شروع موسیقی در صورت مسدود بودن اولیه توسط مرورگر -->
+      <div 
+        v-if="!isAudioPlaying"
+        class="flex items-center gap-2 bg-[#b45309]/80 hover:bg-[#d97706] text-white px-4 py-1.5 rounded-full border border-amber-400/50 backdrop-blur-md shadow-[0_0_20px_rgba(180,83,9,0.5)] animate-pulse transition-transform hover:scale-105"
+      >
+        <span class="text-sm">🔊</span>
+        <span class="font-bold text-[11px]">برای پخش موسیقی سینمایی کلیک کنید یا از ریموت بزنید</span>
+      </div>
+      <div 
+        v-else 
+        class="flex items-center gap-2 bg-black/50 px-3.5 py-1.5 rounded-full border border-emerald-500/30 backdrop-blur-sm text-emerald-400 text-[11px] font-bold"
+      >
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>موسیقی مستند در حال پخش است</span>
       </div>
     </header>
 
@@ -59,7 +88,7 @@ function handleEnter() {
           @click="handleEnter"
           class="w-full relative h-16 rounded-sm border border-[rgba(237,232,223,0.25)] bg-[#121319]/85 backdrop-blur-md overflow-hidden transition-all duration-500 hover:border-[#b45309] hover:shadow-[0_0_30px_rgba(180,83,9,0.35)] active:scale-98 cursor-pointer"
         >
-          <!-- ۱. حالت عادی (بدون هاور): نمایش کاملاً واضح، برجسته و خوانای کد اتاق جهت ورود در گوشی -->
+          <!-- ۱. حالت عادی (بدون هاور): نمایش کاملاً واضح، برجسته و خوانای کد ۵ رقمی اتاق جهت ورود در گوشی -->
           <div class="absolute inset-0 flex items-center justify-between px-6 transition-all duration-500 opacity-100 group-hover:opacity-0 pointer-events-none">
             <div class="flex items-center gap-2.5">
               <span class="w-2.5 h-2.5 rounded-full bg-[#22c55e] animate-pulse"></span>

@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { Peer } from 'peerjs';
+import mqtt from 'mqtt';
 
 // وضعیت مشترک سراسری (Singleton)
 const currentPage = ref(1);
@@ -17,6 +18,8 @@ let peer = null;
 let activeConnections = [];
 let controllerConn = null;
 let broadcastChannel = null;
+let mqttClient = null;
+let currentClientId = '';
 
 // تولید کد اتاق کاملاً عددی و ۵ رقمی (مثلاً 48291)
 function generateShortRoomId() {
@@ -24,7 +27,77 @@ function generateShortRoomId() {
 }
 
 export function useSyncState() {
-  // مقداردهی اولیه کانال BroadcastChannel جهت تبادل اطلاعات در تب‌ها و محیط محلی
+  // ۱. راه‌اندازی موتور ابری اینترنتی MQTT بر بستر WSS (اتصال ایمن و پرسرعت در تمام شبکه‌های ایرانسل، همراه‌اول و وای‌فای)
+  function initMqttChannel(targetRoomId) {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (mqttClient) {
+        try { mqttClient.end(true); } catch (e) {}
+      }
+
+      const topic = `scales_history_room_${targetRoomId}`;
+      currentClientId = `scales_${isHost.value ? 'host' : 'ctrl'}_${targetRoomId}_${Math.random().toString(16).substring(2, 8)}`;
+
+      // اولویت اول: سرور عمومی بسیار پرسرعت EMQX
+      const primaryBroker = 'wss://broker.emqx.io:8084/mqtt';
+      const fallbackBroker = 'wss://test.mosquitto.org:8081';
+
+      let activeBrokerUrl = primaryBroker;
+
+      const connectBroker = (brokerUrl) => {
+        mqttClient = mqtt.connect(brokerUrl, {
+          clientId: currentClientId,
+          clean: true,
+          connectTimeout: 5000,
+          reconnectPeriod: 3000
+        });
+
+        mqttClient.on('connect', () => {
+          console.log(`[MQTT] Connected via ${brokerUrl} for room:`, targetRoomId);
+          mqttClient.subscribe(topic, { qos: 1 }, (err) => {
+            if (!err) {
+              isConnected.value = true;
+              connectionError.value = '';
+              // در حالت کنترلر، درخواست وضعیت کنونی را به مانیتور بفرست
+              if (!isHost.value) {
+                mqttClient.publish(topic, JSON.stringify({
+                  type: 'REQUEST_STATE',
+                  roomId: targetRoomId,
+                  senderClientId: currentClientId
+                }));
+              }
+            }
+          });
+        });
+
+        mqttClient.on('message', (t, msg) => {
+          try {
+            const parsed = JSON.parse(msg.toString());
+            // جلوگیری از پردازش مجدد پیام‌های ارسالی توسط خود این کلاینت
+            if (parsed.senderClientId && parsed.senderClientId === currentClientId) return;
+
+            handleIncomingMessage(parsed);
+          } catch (e) {}
+        });
+
+        mqttClient.on('error', (err) => {
+          console.warn(`[MQTT] Warning on ${brokerUrl}:`, err);
+          if (brokerUrl === primaryBroker) {
+            try { mqttClient.end(true); } catch (e) {}
+            activeBrokerUrl = fallbackBroker;
+            connectBroker(fallbackBroker);
+          }
+        });
+      };
+
+      connectBroker(activeBrokerUrl);
+    } catch (err) {
+      console.warn('MQTT setup error:', err);
+    }
+  }
+
+  // ۲. مقداردهی اولیه کانال BroadcastChannel جهت تبادل اطلاعات در تب‌های هم‌نام در یک سیستم
   function initBroadcastChannel() {
     try {
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -48,12 +121,11 @@ export function useSyncState() {
     }
   }
 
-  // پردازش پیام‌های دریافتی از PeerJS یا BroadcastChannel
+  // پردازش پیام‌های دریافتی از PeerJS، MQTT یا BroadcastChannel
   function handleIncomingMessage(data) {
     if (!data || typeof data !== 'object') return;
 
     if (data.roomId && data.roomId !== roomId.value && !roomId.value.includes(data.roomId)) {
-      // پیام مربوط به اتاقی دیگر است
       return;
     }
 
@@ -88,14 +160,26 @@ export function useSyncState() {
 
       case 'TOGGLE_AUDIO':
         isAudioPlaying.value = !isAudioPlaying.value;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(isAudioPlaying.value ? 'host-play-audio' : 'host-pause-audio'));
+        }
         broadcastState();
         break;
 
-      case 'SET_AUDIO_STATE':
-        if (typeof data.isPlaying === 'boolean') {
-          isAudioPlaying.value = data.isPlaying;
-          broadcastState();
+      case 'PLAY_AUDIO':
+        isAudioPlaying.value = true;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('host-play-audio'));
         }
+        broadcastState();
+        break;
+
+      case 'PAUSE_AUDIO':
+        isAudioPlaying.value = false;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('host-pause-audio'));
+        }
+        broadcastState();
         break;
 
       case 'SCROLL_DOWN':
@@ -110,6 +194,7 @@ export function useSyncState() {
         hasEnteredExperience.value = true;
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('host-enter-publication'));
+          window.dispatchEvent(new CustomEvent('host-play-audio'));
         }
         broadcastState();
         break;
@@ -124,7 +209,6 @@ export function useSyncState() {
         break;
 
       case 'REQUEST_STATE':
-        // درخواست کنترلر برای دریافت آخرین وضعیت
         if (isHost.value) {
           broadcastState();
         }
@@ -132,7 +216,7 @@ export function useSyncState() {
     }
   }
 
-  // ارسال وضعیت جاری به کلیه اتصالات PeerJS و کانال محلی
+  // ارسال وضعیت جاری به کلیه کانال‌های ارتباطی (MQTT + WebRTC + BroadcastChannel)
   function broadcastState() {
     const statePayload = {
       type: 'SYNC_STATE',
@@ -142,22 +226,30 @@ export function useSyncState() {
       volume: volume.value,
       isPlaying: isAudioPlaying.value,
       hasEnteredExperience: hasEnteredExperience.value,
+      senderClientId: currentClientId,
       timestamp: Date.now()
     };
 
-    // ارسال به اتصالات فعال WebRTC
+    // ۱. ارسال از طریق کانال اینترنتی ابری MQTT
+    if (mqttClient && mqttClient.connected) {
+      try {
+        const topic = `scales_history_room_${roomId.value}`;
+        mqttClient.publish(topic, JSON.stringify(statePayload));
+      } catch (err) {}
+    }
+
+    // ۲. ارسال به اتصالات فعال WebRTC PeerJS
     activeConnections.forEach(conn => {
       if (conn && conn.open) {
         try { conn.send(statePayload); } catch (err) {}
       }
     });
 
-    // ارسال به BroadcastChannel
+    // ۳. ارسال به BroadcastChannel
     if (broadcastChannel) {
       try { broadcastChannel.postMessage(statePayload); } catch (err) {}
     }
 
-    // ارسال به localStorage برای شنودگران احتمالی
     try {
       localStorage.setItem('iran_history_sync_state', JSON.stringify(statePayload));
     } catch (e) {}
@@ -171,8 +263,9 @@ export function useSyncState() {
     connectionError.value = '';
 
     initBroadcastChannel();
+    initMqttChannel(finalRoomId);
 
-    // ایجاد اتصال PeerJS با شناسه عددی
+    // راه‌اندازی موازی PeerJS با سرورهای قدرتمند STUN بین‌المللی
     const peerId = `hist-host-${finalRoomId}`;
 
     try {
@@ -196,7 +289,7 @@ export function useSyncState() {
       });
 
       peer.on('connection', (conn) => {
-        console.log('Mobile controller connected:', conn.peer);
+        console.log('Mobile controller connected via WebRTC:', conn.peer);
         activeConnections.push(conn);
         connectedPeersCount.value = activeConnections.length;
 
@@ -238,7 +331,7 @@ export function useSyncState() {
     }
   }
 
-  // راه‌اندازی حالت کنترلر (گوشی تلفن همراه)
+  // راه‌اندازی حالت کنترلر (گوشی تلفن همراه با هر اپراتوری)
   function connectAsController(targetRoomId) {
     isHost.value = false;
     const cleanRoom = String(targetRoomId).trim();
@@ -247,6 +340,7 @@ export function useSyncState() {
     isConnected.value = false;
 
     initBroadcastChannel();
+    initMqttChannel(cleanRoom);
 
     const hostPeerId = `hist-host-${cleanRoom}`;
 
@@ -270,11 +364,10 @@ export function useSyncState() {
         controllerConn = peer.connect(hostPeerId, { reliable: true });
 
         controllerConn.on('open', () => {
-          console.log('Connected to host successfully!');
+          console.log('Connected to host successfully via WebRTC!');
           isConnected.value = true;
           connectionError.value = '';
 
-          // درخواست آخرین وضعیت از میزبان
           controllerConn.send({
             type: 'REQUEST_STATE',
             roomId: cleanRoom
@@ -285,45 +378,47 @@ export function useSyncState() {
           handleIncomingMessage(data);
         });
 
-        controllerConn.on('close', () => {
-          isConnected.value = false;
-        });
-
+        controllerConn.on('close', () => {});
         controllerConn.on('error', (err) => {
-          console.warn('Controller connection error:', err);
-          connectionError.value = 'خطا در برقراری ارتباط با نمایشگر';
+          console.warn('Controller WebRTC connection warning:', err);
         });
       });
 
       peer.on('error', (err) => {
-        console.warn('Controller peer error:', err);
-        connectionError.value = 'دستگاهی با این کد ۵ رقمی یافت نشد یا در دسترس نیست';
+        console.warn('Controller peer warning (falling back to MQTT):', err);
       });
     } catch (e) {
-      console.warn('Failed to initialize controller peer:', e);
-      connectionError.value = 'امکان اتصال مستقیم فراهم نشد';
+      console.warn('PeerJS init fallback:', e);
     }
   }
 
-  // دستورات ارسالی از کنترلر به میزبان
+  // دستورات ارسالی از کنترلر به میزبان به صورت هم‌زمان در همه کانال‌ها
   function sendCommand(commandPayload) {
     const payload = {
       ...commandPayload,
       roomId: roomId.value,
+      senderClientId: currentClientId,
       timestamp: Date.now()
     };
 
-    // ۱. ارسال از طریق کانال PeerJS اگر متصل است
+    // ۱. ارسال بیدرنگ اینترنتی از طریق MQTT بر بستر WSS
+    if (mqttClient && mqttClient.connected) {
+      try {
+        const topic = `scales_history_room_${roomId.value}`;
+        mqttClient.publish(topic, JSON.stringify(payload));
+      } catch (e) {}
+    }
+
+    // ۲. ارسال از طریق کانال WebRTC PeerJS
     if (controllerConn && controllerConn.open) {
       try { controllerConn.send(payload); } catch (e) {}
     }
 
-    // ۲. ارسال از طریق BroadcastChannel برای تب‌های موازی
+    // ۳. ارسال از طریق BroadcastChannel
     if (broadcastChannel) {
       try { broadcastChannel.postMessage(payload); } catch (e) {}
     }
 
-    // ۳. ارسال از طریق ذخیره‌ساز محلی (Fallback)
     try {
       localStorage.setItem('iran_history_sync_command', JSON.stringify(payload));
     } catch (e) {}
@@ -337,7 +432,7 @@ export function useSyncState() {
       currentPage.value = commandPayload.page;
     } else if (commandPayload.type === 'SET_VOLUME') {
       volume.value = commandPayload.volume;
-    } else if (commandPayload.type === 'TOGGLE_AUDIO') {
+    } else if (commandPayload.type === 'TOGGLE_AUDIO' || commandPayload.type === 'PLAY_AUDIO') {
       isAudioPlaying.value = !isAudioPlaying.value;
     } else if (commandPayload.type === 'ENTER_PUBLICATION') {
       hasEnteredExperience.value = true;
@@ -418,7 +513,16 @@ export function useSyncState() {
       isAudioPlaying.value = !isAudioPlaying.value;
       broadcastState();
     } else {
-      sendCommand({ type: 'TOGGLE_AUDIO' });
+      sendCommand({ type: isAudioPlaying.value ? 'PAUSE_AUDIO' : 'PLAY_AUDIO' });
+    }
+  };
+
+  const playAudioForce = () => {
+    isAudioPlaying.value = true;
+    if (isHost.value) {
+      broadcastState();
+    } else {
+      sendCommand({ type: 'PLAY_AUDIO' });
     }
   };
 
@@ -443,6 +547,7 @@ export function useSyncState() {
     gotoPage,
     setVolume,
     toggleAudio,
+    playAudioForce,
     broadcastState
   };
 }

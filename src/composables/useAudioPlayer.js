@@ -36,6 +36,7 @@ export function useAudioPlayer() {
 
       audio1.preload = 'auto';
       audio2.preload = 'auto';
+      audio1.autoplay = true;
 
       audio1.volume = (volume.value / 100);
       audio2.volume = (volume.value / 100);
@@ -52,16 +53,22 @@ export function useAudioPlayer() {
         playTrack(audio1);
       });
 
-      // شنودگر سراسری برای برطرف کردن محدودیت Autoplay مرورگر با اولین کلیک
-      const unlockAutoplay = () => {
-        if (isBlockedByBrowser.value && audio1) {
+      // به محض هرگونه تکان دادن ماوس، لمس صفحه، اسکرول یا فشردن کلید، صدا آغاز می‌شود
+      const triggerImmediatePlay = () => {
+        if ((isBlockedByBrowser.value || !isAudioPlaying.value) && audio1) {
           playTrack(audio1);
         }
-        window.removeEventListener('click', unlockAutoplay);
-        window.removeEventListener('touchstart', unlockAutoplay);
+        removeEarlyListeners();
       };
-      window.addEventListener('click', unlockAutoplay, { once: true });
-      window.addEventListener('touchstart', unlockAutoplay, { once: true });
+
+      const earlyEvents = ['mousemove', 'pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart', 'click'];
+      const removeEarlyListeners = () => {
+        earlyEvents.forEach(evt => window.removeEventListener(evt, triggerImmediatePlay));
+      };
+
+      earlyEvents.forEach(evt => {
+        window.addEventListener(evt, triggerImmediatePlay, { passive: true, once: true });
+      });
 
       isInitialized = true;
     } catch (err) {
@@ -79,7 +86,7 @@ export function useAudioPlayer() {
           isAudioPlaying.value = true;
         })
         .catch((err) => {
-          console.log('Autoplay prevented by browser, waiting for user touch/click:', err);
+          console.log('Autoplay deferred by browser policy, waiting for first movement:', err);
           isBlockedByBrowser.value = true;
           isAudioPlaying.value = false;
         });

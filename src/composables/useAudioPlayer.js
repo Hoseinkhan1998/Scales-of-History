@@ -59,8 +59,8 @@ export function useAudioPlayer() {
       audio1.preload = 'auto';
       audio2.preload = 'auto';
 
-      // آغاز پخش موسیقی اول از ثانیه ۱۲ طبق درخواست
-      audio1.currentTime = 12;
+      // آغاز پخش موسیقی اول از ثانیه ۱۵ طبق درخواست
+      audio1.currentTime = 15;
 
       applyVolumeToAudios(volume.value);
 
@@ -73,7 +73,7 @@ export function useAudioPlayer() {
       // بازگشت چرخه به قطعه اول پس از پایان قطعه دوم
       audio2.addEventListener('ended', () => {
         currentTrack = 1;
-        if (audio1) audio1.currentTime = 12;
+        if (audio1) audio1.currentTime = 15;
         playTrack(audio1);
       });
 
@@ -83,8 +83,8 @@ export function useAudioPlayer() {
       const unlockAudioHandler = () => {
         const target = (currentTrack === 1 || !audio2) ? audio1 : audio2;
         if (target && !isAudioPlaying.value) {
-          if (target === audio1 && audio1.currentTime < 12) {
-            audio1.currentTime = 12;
+          if (target === audio1 && audio1.currentTime < 15) {
+            audio1.currentTime = 15;
           }
           applyVolumeToAudios(volume.value);
           const p = target.play();
@@ -138,10 +138,10 @@ export function useAudioPlayer() {
         })
         .catch((err) => {
           console.log('[Autoplay Policy] Play blocked until user gesture or remote trigger:', err.name);
-          // زمان را جلو نبریم تا موسیقی از ثانیه ۱۲ بماند
+          // زمان را جلو نبریم تا موسیقی از ثانیه ۱۵ بماند
           audioEl.pause();
           if (audioEl === audio1) {
-            audioEl.currentTime = 12;
+            audioEl.currentTime = 15;
           } else {
             audioEl.currentTime = 0;
           }
@@ -165,8 +165,8 @@ export function useAudioPlayer() {
       audio2.currentTime = 0;
     }
     if (audio1) {
-      if (audio1.paused && audio1.currentTime < 12) {
-        audio1.currentTime = 12;
+      if (audio1.paused && audio1.currentTime < 15) {
+        audio1.currentTime = 15;
       }
       applyVolumeToAudios(volume.value);
       playTrack(audio1);

@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import { useAudioPlayer } from '../composables/useAudioPlayer';
 import { useSyncState } from '../composables/useSyncState';
+import TermHighlight from './Common/TermHighlight.vue';
 
 const emit = defineEmits(['start-experience']);
 const { startExperienceAudio, isAudioPlaying, isBlockedByBrowser } = useAudioPlayer();
@@ -63,7 +64,14 @@ function handleEnter(e) {
       </h1>
 
       <p class="text-lg sm:text-xl text-[#ede8df]/95 max-w-2xl mx-auto font-light leading-relaxed">
-        پژوهشی عریان، مستند و فارغ از تعصب پیرامون پنجاه سال گذار سیاسی، دگرگونی طبقاتی، توسعه انسانی و سرنوشت اکولوژیک ایران
+        پژوهشی عریان، مستند و فارغ از تعصب پیرامون پنجاه سال گذار سیاسی، دگرگونی طبقاتی، توسعه انسانی و سرنوشت 
+        <TermHighlight 
+          term="اکولوژیک" 
+          en="Ecological" 
+          category="بوم‌شناسی و محیط‌زیست"
+          definition="مربوط به بوم‌شناسی و سازگاری زیست‌محیطی؛ پیوند متقابل میان جامعه انسانی، گونه‌های زیستی و منابع تجدیدناپذیر آب و خاک که بقای سرزمینی ایران را رقم می‌زند."
+        /> 
+        ایران
       </p>
     </main>
 

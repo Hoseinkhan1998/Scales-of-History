@@ -228,11 +228,11 @@ export function useSyncState() {
         break;
 
       case 'SCROLL_DOWN':
-        performScroll(380);
+        performScroll(190);
         break;
 
       case 'SCROLL_UP':
-        performScroll(-380);
+        performScroll(-190);
         break;
 
       case 'ENTER_PUBLICATION':
@@ -512,7 +512,7 @@ export function useSyncState() {
 
   const scrollDown = () => {
     if (isHost.value) {
-      performScroll(380);
+      performScroll(190);
     } else {
       sendCommand({ type: 'SCROLL_DOWN' });
     }
@@ -520,7 +520,7 @@ export function useSyncState() {
 
   const scrollUp = () => {
     if (isHost.value) {
-      performScroll(-380);
+      performScroll(-190);
     } else {
       sendCommand({ type: 'SCROLL_UP' });
     }

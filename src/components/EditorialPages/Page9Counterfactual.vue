@@ -78,7 +78,19 @@ const chapter = chapters[8];
             </div>
           </div>
           <p class="text-xs text-[#a8a39a] leading-relaxed pt-3 border-t border-[rgba(237,232,223,0.06)] mt-2">
-            {{ sc.desc }}
+            <template v-if="idx === 0">
+              با مرگ محمدرضا شاه در اثر بیماری، ولیعهد با همراهی 
+              <TermHighlight 
+                term="تکنوکرات‌های ملی" 
+                en="National Technocrats" 
+                category="مدیریت دولتی و نخبگان علمی"
+                definition="متخصصان، مهندسان و اقتصاددانان کاردان و غیرایدئولوژیک که در سازمان برنامه‌وبودجه و وزارتخانه‌ها به جای وفاداری سیاسی، بر پایه دانش تخصصی و شایسته‌سالاری تصمیم‌گیری می‌کردند."
+              /> 
+              و طبقه متوسط، فضای سیاسی را باز می‌کرد و الگویی شبیه به گذار پادشاهی خوآن کارلوس در اسپانیا پس از فرانکو را رقم می‌زد.
+            </template>
+            <template v-else>
+              {{ sc.desc }}
+            </template>
           </p>
         </div>
       </div>

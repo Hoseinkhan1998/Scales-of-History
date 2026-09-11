@@ -1,4 +1,5 @@
 <script setup>
+import TermHighlight from '../Common/TermHighlight.vue';
 const dimensions = [
   {
     axis: 'ساختار قدرت و مشروعیت',
@@ -44,7 +45,21 @@ const dimensions = [
           <tr v-for="(row, idx) in dimensions" :key="idx" class="hover:bg-[#181921] transition-colors">
             <td class="p-3.5 font-bold text-[#ede8df] bg-[#14151a]">{{ row.axis }}</td>
             <td class="p-3.5 text-[#a8a39a] leading-relaxed">{{ row.pahlavi }}</td>
-            <td class="p-3.5 text-[#a8a39a] leading-relaxed">{{ row.ir }}</td>
+            <td class="p-3.5 text-[#a8a39a] leading-relaxed">
+              <template v-if="idx === 1">
+                انتخابات ادواری کنترل‌شده با فیلتر 
+                <TermHighlight 
+                  term="استصوابی" 
+                  en="Approbatory Supervision" 
+                  category="حقوق اساسی و انتخابات"
+                  definition="نظارت استصوابی؛ اختیار مطلق شورای نگهبان در تفسیر قوانین، احراز یا رد صلاحیت نامزدها و ابطال آراء بدون حق اعتراض نامزدها در دادگاه‌های بی‌طرف."
+                /> 
+                شورای نگهبان و حذف کامل تمام احزاب و دگراندیشان مستقل
+              </template>
+              <template v-else>
+                {{ row.ir }}
+              </template>
+            </td>
           </tr>
         </tbody>
       </table>

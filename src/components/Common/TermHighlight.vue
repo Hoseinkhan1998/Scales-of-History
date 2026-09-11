@@ -96,7 +96,7 @@ defineProps({
   transform: scale(1.05);
 }
 
-/* انیمیشن کشیده شدن خط ماژیک دور کلمه */
+/* انیمیشن کشیده شدن خط ماژیک دور کلمه همراه با نقطه مشخص در گوشه کلمه */
 .marker-rect {
   fill: none;
   stroke: #f59e0b;
@@ -104,9 +104,9 @@ defineProps({
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 100;
-  stroke-dashoffset: 100;
+  stroke-dashoffset: 98.8;
   transition: stroke-dashoffset 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.5));
 }
 
 .group:hover .marker-rect {

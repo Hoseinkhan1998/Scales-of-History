@@ -4,6 +4,7 @@ import { useSyncState, resetScrollToTop } from './composables/useSyncState';
 import { useAudioPlayer } from './composables/useAudioPlayer';
 import { useSpeechPlayer } from './composables/useSpeechPlayer';
 import { useKeyboardNav } from './composables/useKeyboardNav';
+import { startSequentialAudioPreload } from './utils/audioPreloader';
 
 import IntroScreen from './components/IntroScreen.vue';
 import HeaderBar from './components/HeaderBar.vue';
@@ -89,6 +90,9 @@ function handleStartExperience() {
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
+    // آغاز دانلود ترتیبی و گام‌به‌گام صوت‌ها مطابق اولویت (موسیقی اول -> فصل ۱ -> فصل ۲ -> موسیقی دوم -> فصل‌های بعد)
+    startSequentialAudioPreload();
+
     // آغاز فوری پخش موسیقی در همان میلی‌ثانیه اول بارگذاری برنامه
     startExperienceAudio();
 

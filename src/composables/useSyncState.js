@@ -171,12 +171,28 @@ export function useSyncState() {
     }
   }
 
+  // حافظه ردگیری شناسه‌های پیام برای جلوگیری قطعی از پردازش تکراری (Message De-duplication)
+  const processedMsgIds = new Set();
+
   // پردازش پیام‌های دریافتی از PeerJS، MQTT یا BroadcastChannel
   function handleIncomingMessage(data) {
     if (!data || typeof data !== 'object') return;
 
     if (data.roomId && data.roomId !== roomId.value && !roomId.value.includes(data.roomId)) {
       return;
+    }
+
+    // چشم‌پوشی از پیام‌های ارسالی توسط خود این کلاینت
+    if (data.senderClientId && data.senderClientId === currentClientId) return;
+
+    // جلوگیری از اجرای چندباره یک پیام واحد که همزمان از WebRTC و MQTT می‌رسد
+    if (data.msgId) {
+      if (processedMsgIds.has(data.msgId)) return;
+      processedMsgIds.add(data.msgId);
+      if (processedMsgIds.size > 100) {
+        const first = processedMsgIds.values().next().value;
+        processedMsgIds.delete(first);
+      }
     }
 
     switch (data.type) {
@@ -264,14 +280,6 @@ export function useSyncState() {
         isSpeechPlaying.value = false;
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('host-speech-pause'));
-        }
-        broadcastState();
-        break;
-
-      case 'SPEECH_TOGGLE':
-        isSpeechPlaying.value = !isSpeechPlaying.value;
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('host-speech-toggle'));
         }
         broadcastState();
         break;
@@ -517,6 +525,7 @@ export function useSyncState() {
       ...commandPayload,
       roomId: roomId.value,
       senderClientId: currentClientId,
+      msgId: `${currentClientId}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       timestamp: Date.now()
     };
 
@@ -646,10 +655,10 @@ export function useSyncState() {
     }
   };
 
-  // متدهای اختصاصی کنترل گفتار فصول
+  // متدهای اختصاصی کنترل گفتار فصول به صورت صریح و غیرمتداخل
   const playSpeech = () => {
+    isSpeechPlaying.value = true;
     if (isHost.value) {
-      isSpeechPlaying.value = true;
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('host-speech-play'));
       }
@@ -660,8 +669,8 @@ export function useSyncState() {
   };
 
   const pauseSpeech = () => {
+    isSpeechPlaying.value = false;
     if (isHost.value) {
-      isSpeechPlaying.value = false;
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('host-speech-pause'));
       }
@@ -672,14 +681,10 @@ export function useSyncState() {
   };
 
   const toggleSpeech = () => {
-    if (isHost.value) {
-      isSpeechPlaying.value = !isSpeechPlaying.value;
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('host-speech-toggle'));
-      }
-      broadcastState();
+    if (isSpeechPlaying.value) {
+      pauseSpeech();
     } else {
-      sendCommand({ type: 'SPEECH_TOGGLE' });
+      playSpeech();
     }
   };
 

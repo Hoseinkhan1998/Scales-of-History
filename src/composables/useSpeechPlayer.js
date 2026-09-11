@@ -44,8 +44,28 @@ export function useSpeechPlayer() {
     if (isSpeechInitialized || typeof window === 'undefined') return;
 
     speechAudio = new Audio();
-    speechAudio.preload = 'metadata';
+    speechAudio.preload = 'auto';
     applySpeechVolume(speechVolume.value);
+
+    // همگام‌سازی واقعی وضعیت با پلیر مرورگر
+    speechAudio.addEventListener('play', () => {
+      isSpeechPlaying.value = true;
+      syncSpeechPlaying.value = true;
+      broadcastState();
+    });
+
+    speechAudio.addEventListener('pause', () => {
+      isSpeechPlaying.value = false;
+      syncSpeechPlaying.value = false;
+      broadcastState();
+    });
+
+    speechAudio.addEventListener('error', (e) => {
+      console.warn('[Speech Audio Error]', speechAudio?.error, e);
+      isSpeechPlaying.value = false;
+      syncSpeechPlaying.value = false;
+      broadcastState();
+    });
 
     // به‌روزرسانی ثانیه‌شمار پخش
     speechAudio.addEventListener('timeupdate', () => {
@@ -88,10 +108,6 @@ export function useSpeechPlayer() {
 
     window.addEventListener('host-speech-pause', () => {
       pauseSpeech();
-    });
-
-    window.addEventListener('host-speech-toggle', () => {
-      toggleSpeech();
     });
 
     window.addEventListener('host-speech-seek', (e) => {
@@ -141,23 +157,26 @@ export function useSpeechPlayer() {
 
     hasSpeechAudio.value = true;
     syncHasSpeechAudio.value = true;
-    isSpeechLoading.value = true;
 
+    const expectedSrc = `/music/speach/season${id}.mp3`;
     if (speechAudio) {
-      speechAudio.pause();
-      // فایل‌های گفتار در مسیر /music/speach/season{id}.mp3 قرار دارند
-      speechAudio.src = `/music/speach/season${id}.mp3`;
-      speechAudio.currentTime = 0;
-      speechCurrentTime.value = 0;
-      syncSpeechCurrentTime.value = 0;
-      applySpeechVolume(speechVolume.value);
+      // فقط در صورتی سورس را عوض کن که واقعاً فصل تغییر کرده باشد
+      if (!speechAudio.src || !speechAudio.src.endsWith(expectedSrc)) {
+        isSpeechLoading.value = true;
+        speechAudio.pause();
+        speechAudio.src = expectedSrc;
+        speechAudio.currentTime = 0;
+        speechCurrentTime.value = 0;
+        syncSpeechCurrentTime.value = 0;
+        applySpeechVolume(speechVolume.value);
 
-      if (autoPlay) {
-        playSpeech();
-      } else {
-        isSpeechPlaying.value = false;
-        syncSpeechPlaying.value = false;
-        broadcastState();
+        if (autoPlay) {
+          playSpeech();
+        } else {
+          isSpeechPlaying.value = false;
+          syncSpeechPlaying.value = false;
+          broadcastState();
+        }
       }
     }
   }

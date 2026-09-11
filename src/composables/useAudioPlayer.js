@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
 import { useSyncState } from './useSyncState';
+import { startSequentialAudioPreload } from '../utils/audioPreloader';
 
 let audio1 = null;
 let audio2 = null;
@@ -8,19 +9,6 @@ let isInitialized = false;
 
 const isBlockedByBrowser = ref(false);
 const isAudioPlaying = ref(false);
-
-// کش کردن فایل‌های صوتی در Cache Storage مرورگر جهت لود آنی و بدون دانلود مجدد
-async function cacheAudioFiles() {
-  if (typeof window !== 'undefined' && 'caches' in window) {
-    try {
-      const cache = await caches.open('iran-history-audio-cache-v1');
-      await cache.addAll(['/music/music1.mp3', '/music/music2.mp3']);
-      console.log('[Cache] Audio tracks cached for offline / instant playback');
-    } catch (e) {
-      console.warn('[Cache] Audio caching note:', e);
-    }
-  }
-}
 
 // محاسبه بلندی صدا با منحنی توانی برای ایجاد تغییرات کاملاً محسوس، واقعی و پویا در گوش شنونده
 function calculatePerceptualVolume(volPercent) {
@@ -51,7 +39,8 @@ export function useAudioPlayer() {
     if (isInitialized || typeof window === 'undefined') return;
 
     try {
-      cacheAudioFiles();
+      // دانلود ترتیبی فایل‌های صوتی به ترتیب اولویت (موسیقی اول -> فصل ۱ -> فصل ۲ -> موسیقی دوم -> فصل‌های بعد)
+      startSequentialAudioPreload();
 
       audio1 = new Audio('/music/music1.mp3');
       audio2 = new Audio('/music/music2.mp3');

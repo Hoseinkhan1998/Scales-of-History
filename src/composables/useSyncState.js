@@ -39,6 +39,13 @@ const connectionError = ref('');
 const connectedPeersCount = ref(0);
 const hasEnteredExperience = ref(false);
 
+// وضعیت اختصاصی فایل‌های گفتار فصول (کاملاً مستقل از موسیقی متن)
+const isSpeechPlaying = ref(false);
+const speechVolume = ref(85); // ۰ تا ۱۰۰
+const speechCurrentTime = ref(0);
+const speechDuration = ref(0);
+const hasSpeechAudio = ref(true);
+
 let peer = null;
 let activeConnections = [];
 let controllerConn = null;
@@ -244,12 +251,71 @@ export function useSyncState() {
         broadcastState();
         break;
 
+      // پردازش فرامین اختصاصی گفتار فصول
+      case 'SPEECH_PLAY':
+        isSpeechPlaying.value = true;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('host-speech-play'));
+        }
+        broadcastState();
+        break;
+
+      case 'SPEECH_PAUSE':
+        isSpeechPlaying.value = false;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('host-speech-pause'));
+        }
+        broadcastState();
+        break;
+
+      case 'SPEECH_TOGGLE':
+        isSpeechPlaying.value = !isSpeechPlaying.value;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('host-speech-toggle'));
+        }
+        broadcastState();
+        break;
+
+      case 'SPEECH_SEEK':
+        if (typeof data.time === 'number') {
+          speechCurrentTime.value = data.time;
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('host-speech-seek', { detail: data.time }));
+          }
+          broadcastState();
+        }
+        break;
+
+      case 'SPEECH_SEEK_DELTA':
+        if (typeof data.delta === 'number') {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('host-speech-seek-delta', { detail: data.delta }));
+          }
+          broadcastState();
+        }
+        break;
+
+      case 'SPEECH_SET_VOLUME':
+        if (typeof data.volume === 'number') {
+          speechVolume.value = Math.max(0, Math.min(100, data.volume));
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('host-speech-volume-change', { detail: speechVolume.value }));
+          }
+          broadcastState();
+        }
+        break;
+
       case 'SYNC_STATE':
         // دریافت وضعیت از میزبان (مخصوص کنترلر)
         if (typeof data.currentPage === 'number') currentPage.value = data.currentPage;
         if (typeof data.volume === 'number') volume.value = data.volume;
         if (typeof data.isPlaying === 'boolean') isAudioPlaying.value = data.isPlaying;
         if (typeof data.hasEnteredExperience === 'boolean') hasEnteredExperience.value = data.hasEnteredExperience;
+        if (typeof data.isSpeechPlaying === 'boolean') isSpeechPlaying.value = data.isSpeechPlaying;
+        if (typeof data.speechVolume === 'number') speechVolume.value = data.speechVolume;
+        if (typeof data.speechCurrentTime === 'number') speechCurrentTime.value = data.speechCurrentTime;
+        if (typeof data.speechDuration === 'number') speechDuration.value = data.speechDuration;
+        if (typeof data.hasSpeechAudio === 'boolean') hasSpeechAudio.value = data.hasSpeechAudio;
         isConnected.value = true;
         break;
 
@@ -271,6 +337,11 @@ export function useSyncState() {
       volume: volume.value,
       isPlaying: isAudioPlaying.value,
       hasEnteredExperience: hasEnteredExperience.value,
+      isSpeechPlaying: isSpeechPlaying.value,
+      speechVolume: speechVolume.value,
+      speechCurrentTime: speechCurrentTime.value,
+      speechDuration: speechDuration.value,
+      hasSpeechAudio: hasSpeechAudio.value,
       senderClientId: currentClientId,
       timestamp: Date.now()
     };
@@ -575,6 +646,81 @@ export function useSyncState() {
     }
   };
 
+  // متدهای اختصاصی کنترل گفتار فصول
+  const playSpeech = () => {
+    if (isHost.value) {
+      isSpeechPlaying.value = true;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('host-speech-play'));
+      }
+      broadcastState();
+    } else {
+      sendCommand({ type: 'SPEECH_PLAY' });
+    }
+  };
+
+  const pauseSpeech = () => {
+    if (isHost.value) {
+      isSpeechPlaying.value = false;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('host-speech-pause'));
+      }
+      broadcastState();
+    } else {
+      sendCommand({ type: 'SPEECH_PAUSE' });
+    }
+  };
+
+  const toggleSpeech = () => {
+    if (isHost.value) {
+      isSpeechPlaying.value = !isSpeechPlaying.value;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('host-speech-toggle'));
+      }
+      broadcastState();
+    } else {
+      sendCommand({ type: 'SPEECH_TOGGLE' });
+    }
+  };
+
+  const seekSpeech = (timeInSeconds) => {
+    const val = Number(timeInSeconds) || 0;
+    speechCurrentTime.value = val;
+    if (isHost.value) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('host-speech-seek', { detail: val }));
+      }
+      broadcastState();
+    } else {
+      sendCommand({ type: 'SPEECH_SEEK', time: val });
+    }
+  };
+
+  const seekSpeechDelta = (deltaSeconds) => {
+    const val = Number(deltaSeconds) || 0;
+    if (isHost.value) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('host-speech-seek-delta', { detail: val }));
+      }
+      broadcastState();
+    } else {
+      sendCommand({ type: 'SPEECH_SEEK_DELTA', delta: val });
+    }
+  };
+
+  const setSpeechVolume = (vol) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(vol)));
+    speechVolume.value = clamped;
+    if (isHost.value) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('host-speech-volume-change', { detail: clamped }));
+      }
+      broadcastState();
+    } else {
+      sendCommand({ type: 'SPEECH_SET_VOLUME', volume: clamped });
+    }
+  };
+
   return {
     currentPage,
     totalPages,
@@ -586,6 +732,18 @@ export function useSyncState() {
     connectionError,
     connectedPeersCount,
     hasEnteredExperience,
+    // وضعیت و کنترل‌های اختصاصی گفتار فصول
+    isSpeechPlaying,
+    speechVolume,
+    speechCurrentTime,
+    speechDuration,
+    hasSpeechAudio,
+    playSpeech,
+    pauseSpeech,
+    toggleSpeech,
+    seekSpeech,
+    seekSpeechDelta,
+    setSpeechVolume,
     startHost,
     connectAsController,
     nextPage,

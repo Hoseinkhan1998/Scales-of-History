@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useSyncState, resetScrollToTop } from './composables/useSyncState';
 import { useAudioPlayer } from './composables/useAudioPlayer';
+import { useSpeechPlayer } from './composables/useSpeechPlayer';
 import { useKeyboardNav } from './composables/useKeyboardNav';
 
 import IntroScreen from './components/IntroScreen.vue';
@@ -28,9 +29,14 @@ const isPairingModalOpen = ref(false);
 
 const { currentPage, totalPages, startHost, isHost, hasEnteredExperience } = useSyncState();
 const { startExperienceAudio, resumeAudio, pauseAudio, isAudioPlaying } = useAudioPlayer();
+const { loadChapterSpeech, initSpeechAudio } = useSpeechPlayer();
 
-// فعال‌سازی کلیدهای میانبر صفحه‌کلید در حالت دسکتاپ
-useKeyboardNav();
+// هماهنگی بارگذاری فایل صوتی هر فصل با تغییر صفحه
+watch(currentPage, (newPage) => {
+  if (isHost.value) {
+    loadChapterSpeech(newPage);
+  }
+});
 
 // نگاشت صفحات به مؤلفه‌ها
 const pageComponents = {
@@ -96,6 +102,8 @@ onMounted(() => {
     } else {
       // در غیر این صورت، این دستگاه نمایشگر اصلی (Host) است
       startHost();
+      initSpeechAudio();
+      loadChapterSpeech(currentPage.value);
     }
 
     // شنود رویداد ورود به مقاله از طریق ریموت کنترلر گوشی

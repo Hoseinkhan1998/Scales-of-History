@@ -77,7 +77,7 @@ function handleEnter(e) {
           <!-- ۱. حالت عادی (بدون هاور): فقط کد ۳ رقمی بزرگ، تمیز و چشم‌نواز بدون هیچ متن اضافی -->
           <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 opacity-100 group-hover:opacity-0 pointer-events-none">
             <span class="text-2xl sm:text-3xl font-mono font-black text-[#f59e0b] tracking-[0.35em] drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-              {{ roomId || '...' }}
+              {{ roomId }}
             </span>
           </div>
 

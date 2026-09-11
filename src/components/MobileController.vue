@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useSyncState } from '../composables/useSyncState';
 import { chapters } from '../data/publicationData';
-import { toPersianDigits } from '../utils/persianNumbers';
+import { toPersianDigits, toEnglishDigits } from '../utils/persianNumbers';
 
 const { 
   currentPage, 
@@ -101,7 +101,7 @@ function handleTogglePlay() {
 }
 
 function handleConnectManual() {
-  const clean = inputCode.value.replace(/[^0-9]/g, '').trim();
+  const clean = toEnglishDigits(inputCode.value).replace(/[^0-9]/g, '').trim();
   if (!clean) return;
   isConnecting.value = true;
   connectAsController(clean);
@@ -113,7 +113,7 @@ onMounted(() => {
   const params = new URLSearchParams(window.location.search);
   const roomParam = params.get('room');
   if (roomParam) {
-    const clean = roomParam.replace(/[^0-9]/g, '').trim();
+    const clean = toEnglishDigits(roomParam).replace(/[^0-9]/g, '').trim();
     inputCode.value = clean;
     connectAsController(clean);
   }

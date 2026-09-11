@@ -1,6 +1,31 @@
 import { ref } from 'vue';
 import { Peer } from 'peerjs';
 import mqtt from 'mqtt';
+import { toEnglishDigits } from '../utils/persianNumbers';
+
+// تولید کد اتاق کاملاً عددی و ۳ رقمی (مثلاً 482)
+function generateShortRoomId() {
+  return String(Math.floor(100 + Math.random() * 900));
+}
+
+// تولید و نگهداری فوری کد اتاق در حافظه برای جلوگیری از تاخیر حتی در بدو بارگذاری
+function getStoredOrNewRoomId() {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = sessionStorage.getItem('scales_history_room_id');
+      if (stored && /^\d{3}$/.test(stored)) {
+        return stored;
+      }
+    } catch (e) {}
+  }
+  const newId = generateShortRoomId();
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem('scales_history_room_id', newId);
+    } catch (e) {}
+  }
+  return newId;
+}
 
 // وضعیت مشترک سراسری (Singleton)
 const currentPage = ref(1);
@@ -9,7 +34,7 @@ const volume = ref(75); // ۰ تا ۱۰۰
 const isAudioPlaying = ref(false);
 const isHost = ref(true);
 const isConnected = ref(false);
-const roomId = ref('');
+const roomId = ref(getStoredOrNewRoomId());
 const connectionError = ref('');
 const connectedPeersCount = ref(0);
 const hasEnteredExperience = ref(false);
@@ -275,8 +300,11 @@ export function useSyncState() {
   // راه‌اندازی میزبان (صفحه نمایش اصلی / دسکتاپ / تلویزیون)
   function startHost(customRoomId) {
     isHost.value = true;
-    const finalRoomId = customRoomId || generateShortRoomId();
+    const finalRoomId = customRoomId || roomId.value || getStoredOrNewRoomId();
     roomId.value = finalRoomId;
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.setItem('scales_history_room_id', finalRoomId); } catch (e) {}
+    }
     connectionError.value = '';
 
     initBroadcastChannel();
@@ -351,7 +379,7 @@ export function useSyncState() {
   // راه‌اندازی حالت کنترلر (گوشی تلفن همراه با هر اپراتوری)
   function connectAsController(targetRoomId) {
     isHost.value = false;
-    const cleanRoom = String(targetRoomId).trim();
+    const cleanRoom = toEnglishDigits(targetRoomId).replace(/[^0-9]/g, '').trim();
     roomId.value = cleanRoom;
     connectionError.value = '';
     isConnected.value = false;

@@ -197,6 +197,9 @@ export function useSyncState() {
       case 'SET_VOLUME':
         if (typeof data.volume === 'number') {
           volume.value = Math.max(0, Math.min(100, data.volume));
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('host-volume-change', { detail: volume.value }));
+          }
         }
         break;
 

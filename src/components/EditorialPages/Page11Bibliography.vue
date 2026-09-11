@@ -2,6 +2,7 @@
 import { chapters } from '../../data/publicationData';
 import { citationsList } from '../../data/citationsData';
 import { toPersianDigits } from '../../utils/persianNumbers';
+import TermHighlight from '../Common/TermHighlight.vue';
 
 const chapter = chapters[10];
 </script>
@@ -32,7 +33,14 @@ const chapter = chapters[10];
 
     <!-- مقدمه کتاب‌شناسی -->
     <div class="p-4 bg-[#161720] border border-[rgba(237,232,223,0.1)] rounded-sm text-xs text-[#a8a39a] leading-relaxed">
-      {{ chapter.contentBlocks[0].paragraphs[0] }}
+      تمامی ارقام، تحلیل‌ها و جداول ارائه شده در این نشریه بر پایه 
+      <TermHighlight 
+        term="کتاب‌شناسی انتقادی" 
+        en="Critical Bibliography" 
+        category="پژوهش آکادمیک و متدولوژی"
+        definition="روش‌شناسی ارزیابی منابع علمی که در آن سوگیری‌های ایدئولوژیک یا تبلیغاتی طرفین پالایش شده و داده‌های کمی نهادهای جهانی مبنا قرار می‌گیرد."
+      />
+      و داده‌های آماری بانک جهانی، صندوق بین‌المللی پول و کتب معتبر دانشگاهی استخراج شده است.
     </div>
 
     <!-- فهرست کتاب‌شناسی و ارجاعات آکادمیک -->

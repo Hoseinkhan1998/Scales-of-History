@@ -32,7 +32,7 @@ function handleEnter(e) {
   <div 
     @click="handleScreenTap"
     @pointerdown="handleScreenTap"
-    class="fixed inset-0 z-50 bg-[#07080a] flex flex-col justify-between items-center p-6 md:p-12 overflow-hidden select-none cursor-pointer"
+    class="fixed inset-0 z-50 bg-[#07080a] flex flex-col justify-between items-center p-6 md:p-12 overflow-hidden select-none cursor-default"
   >
     <!-- پس‌زمینه تصویر تاریخی fight.png با شفافیت بیشتر و وضوح بالاتر -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">

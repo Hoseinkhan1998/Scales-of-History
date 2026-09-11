@@ -82,7 +82,7 @@ function handleVolumeInput(e) {
     volumeThrottleTimer = setTimeout(() => {
       setVolume(localVolume.value);
       volumeThrottleTimer = null;
-    }, 40);
+    }, 20);
   }
 }
 
@@ -92,7 +92,7 @@ function handleVolumeChange(e) {
   setVolume(newVol);
   setTimeout(() => {
     isDraggingVolume = false;
-  }, 250);
+  }, 150);
 }
 
 function handleTogglePlay() {

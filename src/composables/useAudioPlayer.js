@@ -22,6 +22,28 @@ async function cacheAudioFiles() {
   }
 }
 
+// محاسبه بلندی صدا با منحنی توانی برای ایجاد تغییرات کاملاً محسوس، واقعی و پویا در گوش شنونده
+function calculatePerceptualVolume(volPercent) {
+  const clamped = Math.max(0, Math.min(100, Number(volPercent) || 0));
+  if (clamped <= 0) return 0;
+  // منحنی توانی ۱.۷۵ باعث می‌شود حتی کوچک‌ترین جابجایی اسلایدر، تغییری کاملاً محسوس و گوش‌نواز ایجاد کند
+  return Math.pow(clamped / 100, 1.75);
+}
+
+function applyVolumeToAudios(volPercent) {
+  const vol = Number(volPercent);
+  const effective = calculatePerceptualVolume(vol);
+  const isMuted = vol <= 0;
+  if (audio1) {
+    audio1.volume = effective;
+    audio1.muted = isMuted;
+  }
+  if (audio2) {
+    audio2.volume = effective;
+    audio2.muted = isMuted;
+  }
+}
+
 export function useAudioPlayer() {
   const { volume, isAudioPlaying: syncIsPlaying } = useSyncState();
 
@@ -37,9 +59,7 @@ export function useAudioPlayer() {
       audio1.preload = 'auto';
       audio2.preload = 'auto';
 
-      const targetVol = Math.max(0, Math.min(1, volume.value / 100));
-      audio1.volume = targetVol;
-      audio2.volume = targetVol;
+      applyVolumeToAudios(volume.value);
 
       // انتقال پیوسته به قطعه دوم پس از پایان قطعه اول
       audio1.addEventListener('ended', () => {
@@ -59,8 +79,7 @@ export function useAudioPlayer() {
       const unlockAudioHandler = () => {
         const target = (currentTrack === 1 || !audio2) ? audio1 : audio2;
         if (target && !isAudioPlaying.value) {
-          target.muted = false;
-          target.volume = Math.max(0, Math.min(1, volume.value / 100));
+          applyVolumeToAudios(volume.value);
           const p = target.play();
           if (p !== undefined) {
             p.then(() => {
@@ -86,6 +105,10 @@ export function useAudioPlayer() {
         pauseAudio();
       });
 
+      window.addEventListener('host-volume-change', (e) => {
+        applyVolumeToAudios(e.detail);
+      });
+
       isInitialized = true;
 
       // تلاش اول برای پخش فوری و بی‌درنگ در ثانیه اول لود سایت
@@ -97,8 +120,7 @@ export function useAudioPlayer() {
 
   function playTrack(audioEl) {
     if (!audioEl) return;
-    audioEl.muted = false;
-    audioEl.volume = Math.max(0, Math.min(1, volume.value / 100));
+    applyVolumeToAudios(volume.value);
     const playPromise = audioEl.play();
     if (playPromise !== undefined) {
       playPromise
@@ -135,8 +157,7 @@ export function useAudioPlayer() {
       if (audio1.paused) {
         audio1.currentTime = 0;
       }
-      audio1.muted = false;
-      audio1.volume = Math.max(0, Math.min(1, volume.value / 100));
+      applyVolumeToAudios(volume.value);
       playTrack(audio1);
     }
   }
@@ -155,8 +176,7 @@ export function useAudioPlayer() {
     }
     const targetAudio = (currentTrack === 1 || !audio2) ? audio1 : audio2;
     if (targetAudio) {
-      targetAudio.muted = false;
-      targetAudio.volume = Math.max(0, Math.min(1, volume.value / 100));
+      applyVolumeToAudios(volume.value);
       playTrack(targetAudio);
     }
   }
@@ -173,9 +193,7 @@ export function useAudioPlayer() {
 
   // نظارت بر تغییرات بلندی صدا (همگام با اسلایدر ریموت)
   watch(volume, (newVol) => {
-    const norm = Math.max(0, Math.min(1, newVol / 100));
-    if (audio1) audio1.volume = norm;
-    if (audio2) audio2.volume = norm;
+    applyVolumeToAudios(newVol);
   });
 
   return {

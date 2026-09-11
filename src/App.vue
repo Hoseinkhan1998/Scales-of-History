@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useSyncState } from './composables/useSyncState';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { useSyncState, resetScrollToTop } from './composables/useSyncState';
 import { useAudioPlayer } from './composables/useAudioPlayer';
 import { useKeyboardNav } from './composables/useKeyboardNav';
 
@@ -27,7 +27,7 @@ const isMobileControllerRole = ref(false);
 const isPairingModalOpen = ref(false);
 
 const { currentPage, totalPages, startHost, isHost, hasEnteredExperience } = useSyncState();
-const { startExperienceAudio, resumeAudio, pauseAudio } = useAudioPlayer();
+const { startExperienceAudio, resumeAudio, pauseAudio, isAudioPlaying } = useAudioPlayer();
 
 // فعال‌سازی کلیدهای میانبر صفحه‌کلید در حالت دسکتاپ
 useKeyboardNav();
@@ -51,8 +51,31 @@ const currentPageComponent = computed(() => {
   return pageComponents[currentPage.value] || Page1Methodology;
 });
 
+// پس از پایان خروج صفحه پیشین و قبل از نمایش صفحه جدید، اسکرول بدون پرش به بالا تنظیم می‌شود
+function handleAfterLeave() {
+  resetScrollToTop();
+}
+
+function handleBeforeEnter() {
+  resetScrollToTop();
+}
+
+function handleAfterEnter() {
+  resetScrollToTop();
+}
+
+watch(hasEnteredExperience, (entered) => {
+  if (entered) {
+    nextTick(() => {
+      resetScrollToTop();
+      setTimeout(resetScrollToTop, 50);
+    });
+  }
+});
+
 function handleStartExperience() {
   hasEnteredExperience.value = true;
+  resetScrollToTop();
   if (!isAudioPlaying.value) {
     startExperienceAudio();
   }
@@ -78,6 +101,7 @@ onMounted(() => {
     // شنود رویداد ورود به مقاله از طریق ریموت کنترلر گوشی
     window.addEventListener('host-enter-publication', () => {
       hasEnteredExperience.value = true;
+      resetScrollToTop();
       if (!isAudioPlaying.value) {
         startExperienceAudio();
       }
@@ -116,7 +140,13 @@ onMounted(() => {
 
       <!-- محتوای فصل جاری با جلوه انیمیشنی ملایم تغییر صفحه -->
       <main class="flex-1 w-full overflow-y-auto py-4">
-        <Transition name="page-fade" mode="out-in">
+        <Transition 
+          name="page-fade" 
+          mode="out-in"
+          @after-leave="handleAfterLeave"
+          @before-enter="handleBeforeEnter"
+          @after-enter="handleAfterEnter"
+        >
           <component :is="currentPageComponent" :key="currentPage" />
         </Transition>
       </main>

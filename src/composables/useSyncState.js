@@ -21,9 +21,27 @@ let broadcastChannel = null;
 let mqttClient = null;
 let currentClientId = '';
 
-// تولید کد اتاق کاملاً عددی و ۳ رقمی (مثلاً 482)
-function generateShortRoomId() {
-  return String(Math.floor(100 + Math.random() * 900));
+// بازنشانی اسکرول به ابتدای صفحه در مانیتور اصلی
+export function resetScrollToTop() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+      mainEl.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+
+    const scrollableElements = document.querySelectorAll('.overflow-y-auto, .overflow-auto');
+    scrollableElements.forEach(el => {
+      el.scrollTop = 0;
+    });
+  } catch (e) {
+    console.warn('Scroll reset error:', e);
+  }
 }
 
 export function useSyncState() {
@@ -480,6 +498,7 @@ export function useSyncState() {
   const enterPublication = () => {
     hasEnteredExperience.value = true;
     if (isHost.value) {
+      resetScrollToTop();
       broadcastState();
     } else {
       sendCommand({ type: 'ENTER_PUBLICATION' });
@@ -542,6 +561,7 @@ export function useSyncState() {
     prevPage,
     scrollDown,
     scrollUp,
+    resetScrollToTop,
     enterPublication,
     gotoPage,
     setVolume,

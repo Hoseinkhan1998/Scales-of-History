@@ -33,21 +33,8 @@ function handleEnter(e) {
   <div 
     @click="handleScreenTap"
     @pointerdown="handleScreenTap"
-    class="fixed inset-0 z-50 bg-[#07080a] flex flex-col justify-between items-center p-6 md:p-12 overflow-hidden select-none cursor-default"
+    class="fixed inset-0 z-50 bg-transparent flex flex-col justify-between items-center p-6 md:p-12 overflow-hidden select-none cursor-default"
   >
-    <!-- پس‌زمینه تصویر تاریخی fight.png با شفافیت بیشتر و وضوح بالاتر -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
-      <img 
-        src="/fight.png" 
-        alt="رویارویی تاریخی"
-        class="w-full h-full object-cover object-center animate-cinematic transition-all duration-1000 transform"
-      />
-      <!-- لایه گرادینت سبک‌تر و ملایم‌تر برای نمایش واضح‌تر و زنده‌تر جزئیات عکس -->
-      <div class="absolute inset-0 bg-gradient-to-t from-[#07080a]/85 via-transparent to-[#07080a]/40"></div>
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,#07080a_90%)]"></div>
-      <!-- بافت گرانولار روزنامه‌ای قدیمی -->
-      <div class="absolute inset-0 paper-grain opacity-30"></div>
-    </div>
 
     <!-- سربرگ مینیمال آغازین -->
     <header class="relative z-10 w-full max-w-5xl flex flex-col sm:flex-row justify-between items-center gap-3 text-xs tracking-widest text-[#a8a39a]/90">

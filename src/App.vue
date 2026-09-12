@@ -138,44 +138,89 @@ onMounted(() => {
   </div>
 
   <!-- ۲. حالت نشریه دیجیتال روی نمایشگر اصلی (دسکتاپ / تلویزیون / سالن نمایش) -->
-  <div v-else class="min-h-screen bg-[#0d0e11] text-[#ede8df] flex flex-col justify-between selection:bg-[#991b1b] selection:text-white paper-grain">
-    <!-- پرده آغازین سینمایی ۱۵ ثانیه‌ای -->
-    <IntroScreen 
-      v-if="!hasEnteredExperience"
-      @start-experience="handleStartExperience"
-    />
-
-    <!-- بدنه اصلی نشریه پس از ورود -->
-    <template v-else>
-      <!-- سربرگ نشریه و کنترل‌های هوشمند -->
-      <HeaderBar @open-pairing-modal="isPairingModalOpen = true" />
-
-      <!-- محتوای فصل جاری با جلوه انیمیشنی ملایم تغییر صفحه -->
-      <main class="flex-1 w-full overflow-y-auto py-4">
-        <Transition 
-          name="page-fade" 
-          mode="out-in"
-          @after-leave="handleAfterLeave"
-          @before-enter="handleBeforeEnter"
-          @after-enter="handleAfterEnter"
-        >
-          <component :is="currentPageComponent" :key="currentPage" />
-        </Transition>
-      </main>
-
-      <!-- نوار ناوبری مطبوعاتی پایین صفحه -->
-      <PageNavigation />
-
-      <!-- مدال اتصال و کد QR جهت اتصال گوشی -->
-      <RemotePairingModal 
-        :is-open="isPairingModalOpen" 
-        @close="isPairingModalOpen = false" 
+  <div v-else class="min-h-screen bg-[#07080a] text-[#ede8df] flex flex-col justify-between selection:bg-[#991b1b] selection:text-white relative overflow-x-hidden">
+    <!-- تصویر ثابت پس‌زمینه تاریخی fight.png در تمام طول تجربه کاربری (هم لندینگ و هم مقالات) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <img 
+        src="/fight.png" 
+        alt="رویارویی تاریخی"
+        class="w-full h-full object-cover object-center animate-cinematic"
       />
-    </template>
+      <!-- لایه گرادینت سینمایی روی تصویر -->
+      <div 
+        class="absolute inset-0 bg-gradient-to-t from-[#07080a]/90 via-transparent to-[#07080a]/60 transition-opacity duration-1000 ease-out"
+        :class="hasEnteredExperience ? 'opacity-40' : 'opacity-100'"
+      ></div>
+      <!-- لایه مشکی که با ورود به مقاله به آرامی پررنگ‌تر می‌شود تا تصویر بماند اما متن مقالات کاملاً خوانا و درخشان باشد -->
+      <div 
+        class="absolute inset-0 bg-[#07080a] transition-opacity duration-1000 ease-out"
+        :class="hasEnteredExperience ? 'opacity-[0.88]' : 'opacity-0'"
+      ></div>
+      <!-- وینیت شعاعی و بافت روزنامه‌ای -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,#07080a_90%)]"></div>
+      <div class="absolute inset-0 paper-grain opacity-25"></div>
+    </div>
+
+    <!-- پرده آغازین سینمایی با انیمیشن فید خروج -->
+    <Transition name="fade-intro">
+      <IntroScreen 
+        v-if="!hasEnteredExperience"
+        @start-experience="handleStartExperience"
+      />
+    </Transition>
+
+    <!-- بدنه اصلی نشریه پس از ورود با فید نرم و روان -->
+    <Transition name="fade-article">
+      <div v-if="hasEnteredExperience" class="relative z-10 flex-1 flex flex-col justify-between min-h-screen">
+        <!-- سربرگ نشریه و کنترل‌های هوشمند -->
+        <HeaderBar @open-pairing-modal="isPairingModalOpen = true" />
+
+        <!-- محتوای فصل جاری با جلوه انیمیشنی ملایم تغییر صفحه -->
+        <main class="flex-1 w-full overflow-y-auto py-4">
+          <Transition 
+            name="page-fade" 
+            mode="out-in"
+            @after-leave="handleAfterLeave"
+            @before-enter="handleBeforeEnter"
+            @after-enter="handleAfterEnter"
+          >
+            <component :is="currentPageComponent" :key="currentPage" />
+          </Transition>
+        </main>
+
+        <!-- نوار ناوبری مطبوعاتی پایین صفحه -->
+        <PageNavigation />
+
+        <!-- مدال اتصال و کد QR جهت اتصال گوشی -->
+        <RemotePairingModal 
+          :is-open="isPairingModalOpen" 
+          @close="isPairingModalOpen = false" 
+        />
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
+/* ترنزیشن محو شدن ملایم صفحه آغازین (Landing) */
+.fade-intro-leave-active {
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.fade-intro-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* ترنزیشن ملایم ورود به بدنه اصلی مقاله */
+.fade-article-enter-active {
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+.fade-article-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
 /* ترنزیشن ملایم میان صفحات نشریه */
 .page-fade-enter-active,
 .page-fade-leave-active {

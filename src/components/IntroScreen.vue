@@ -46,7 +46,7 @@ function handleEnter(e) {
 
     <!-- کانون محتوایی مرکزی: عنوان اثر همراه با پس‌زمینه بلور برای خوانایی کامل متن -->
     <main class="relative z-10 max-w-3xl text-center space-y-5 px-6 sm:px-10 py-8 bg-[#07080a]/45 backdrop-blur-md rounded-lg border border-[rgba(237,232,223,0.12)] shadow-2xl">
-      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-[#ede8df] leading-tight font-serif drop-shadow-md">
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-[#ede8df] leading-tight drop-shadow-md">
         تــرازوی تـاریـخ
       </h1>
 

@@ -16,7 +16,7 @@ const chapter = chapters[9];
         <span>•</span>
         <span class="text-[#736f68]">زمان مطالعه: {{ chapter.readTime }}</span>
       </div>
-      <h1 class="text-3xl sm:text-5xl font-black text-[#ede8df] leading-tight font-serif">
+      <h1 class="text-3xl sm:text-5xl font-black text-[#ede8df] leading-tight">
         {{ chapter.title }}
       </h1>
       <p class="text-lg text-[#a8a39a] mt-3 font-light max-w-3xl leading-relaxed">
@@ -25,13 +25,13 @@ const chapter = chapters[9];
     </div>
 
     <!-- نقل‌قول سردبیری پایانی -->
-    <blockquote class="p-6 bg-[#13141b] border-r-4 border-[#b45309] rounded-sm text-base sm:text-lg text-[#ede8df] font-serif leading-loose italic">
+    <blockquote class="p-6 bg-[#13141b] border-r-4 border-[#b45309] rounded-sm text-base sm:text-lg text-[#ede8df] leading-loose italic">
       {{ chapter.leadQuote }}
     </blockquote>
 
     <!-- متن داوری و تحلیل نهایی -->
     <div class="space-y-4 text-[#ede8df] text-base sm:text-lg leading-relaxed text-justify font-light">
-      <h3 class="text-2xl font-black text-[#ede8df] border-b border-[rgba(237,232,223,0.1)] pb-2 font-serif">
+      <h3 class="text-2xl font-black text-[#ede8df] border-b border-[rgba(237,232,223,0.1)] pb-2">
         {{ chapter.contentBlocks[0].heading }}
       </h3>
       <div class="newspaper-cols-2 space-y-4">

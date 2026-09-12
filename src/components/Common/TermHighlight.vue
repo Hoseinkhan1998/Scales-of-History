@@ -55,7 +55,7 @@ defineProps({
       <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-2 gap-2">
         <div class="flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-          <span class="text-xs font-black text-amber-400 font-serif">{{ term }}</span>
+          <span class="text-xs font-black text-amber-400">{{ term }}</span>
           <span v-if="en" class="text-[10px] text-[#a8a39a] font-mono tracking-wider">({{ en }})</span>
         </div>
         <span class="text-[9px] bg-amber-500/15 text-amber-300 px-2 py-0.5 rounded-full font-medium border border-amber-500/20">

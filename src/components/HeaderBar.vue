@@ -14,7 +14,7 @@ const { currentPage, totalPages } = useSyncState();
         <div class="text-[11px] font-bold text-[#b45309] tracking-widest uppercase">
           ویژه‌نامه تحلیلی پژوهش تاریخی
         </div>
-        <h2 class="text-2xl sm:text-3xl font-black text-[#ede8df] tracking-tight font-serif mt-0.5">
+        <h2 class="text-2xl sm:text-3xl font-black text-[#ede8df] tracking-tight mt-0.5">
           {{ publicationMeta.title }}
         </h2>
       </div>
